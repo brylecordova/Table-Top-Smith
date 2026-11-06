@@ -1,0 +1,6 @@
+{
+  "name": "TableSmith - Boardgame Maker Studio",
+  "description": "Comprehensive design workstation for board games featuring card, box dieline, token, standee, game board, rulebook, and print imposition creation.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
