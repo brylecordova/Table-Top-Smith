@@ -16,9 +16,24 @@ import {
   Box,
   Scissors,
   Sliders,
-  FolderPlus
+  FolderPlus,
+  Edit2,
+  Check,
+  X,
+  Sparkles,
+  Palette,
+  Layers,
+  Eye,
+  EyeOff,
+  Trash2,
+  Copy,
+  Plus,
+  ChevronRight,
+  ChevronDown,
+  Settings2,
+  Paintbrush
 } from 'lucide-vue-next';
-import type { BoxDieline, BoxTemplateType, CanvasElement, TabletopIcon } from '../../types/index.ts';
+import type { BoxDieline, BoxTemplateType, CanvasElement, TabletopIcon, ShapeType, PlaceholderPreset, BoxDesignPreset } from '../../types/index.ts';
 import TransformBox from '../common/TransformBox.vue';
 import AlignmentBar from '../common/AlignmentBar.vue';
 import ElementInspector from '../common/ElementInspector.vue';
@@ -28,7 +43,128 @@ import { useCanvasTransform } from '../../composables/useCanvasTransform.ts';
 
 const activeViewTab = ref<'lid' | 'tray'>('lid');
 const showIconModal = ref(false);
+const showPresetModal = ref(false);
 const selectedElementId = ref<string | null>(null);
+const zoomLevel = ref<number>(1);
+
+// Box Groups & Organization
+const BOX_GROUPS = ['Main Box', 'Deck Box', 'Side Box', 'Expansion Box'];
+const editingBoxId = ref<string | null>(null);
+const editingBoxName = ref<string>('');
+
+// Built-in Curated Design Presets
+const builtInDesignPresets: BoxDesignPreset[] = [
+  {
+    id: 'preset_obsidian_gold',
+    name: 'Royal Obsidian & Gold',
+    description: 'Dark slate body with rich gold borders & Cinzel display headers',
+    lidColor: '#0F172A',
+    sideColor: '#1E293B',
+    trayColor: '#0B0F17',
+    accentColor: '#F59E0B',
+    fontFamily: 'Cinzel',
+    titleColor: '#FFFFFF',
+    subtitleColor: '#F59E0B'
+  },
+  {
+    id: 'preset_crimson_war',
+    name: 'Crimson Citadel War',
+    description: 'Blood crimson panels with ivory accents & bold typography',
+    lidColor: '#7F1D1D',
+    sideColor: '#450A0A',
+    trayColor: '#1C1917',
+    accentColor: '#FEF3C7',
+    fontFamily: 'Outfit',
+    titleColor: '#FEF3C7',
+    subtitleColor: '#FCA5A5'
+  },
+  {
+    id: 'preset_emerald_expedition',
+    name: 'Emerald Wilderness',
+    description: 'Deep forest green with warm amber foil and classic serif',
+    lidColor: '#064E3B',
+    sideColor: '#022C22',
+    trayColor: '#0B0F17',
+    accentColor: '#FBBF24',
+    fontFamily: 'Source Serif 4',
+    titleColor: '#FFFFFF',
+    subtitleColor: '#FBBF24'
+  },
+  {
+    id: 'preset_cyber_void',
+    name: 'Cyber Void & Aether',
+    description: 'Midnight obsidian with neon cyan glow and monospaced tech stats',
+    lidColor: '#090D16',
+    sideColor: '#111827',
+    trayColor: '#030712',
+    accentColor: '#38BDF8',
+    fontFamily: 'JetBrains Mono',
+    titleColor: '#38BDF8',
+    subtitleColor: '#E0F2FE'
+  },
+  {
+    id: 'preset_parchment_tome',
+    name: 'Ancient Tome & Leather',
+    description: 'Aged warm leather and parchment tone with antique gold framing',
+    lidColor: '#292524',
+    sideColor: '#1C1917',
+    trayColor: '#0C0A09',
+    accentColor: '#D97706',
+    fontFamily: 'Cinzel',
+    titleColor: '#FDE68A',
+    subtitleColor: '#D97706'
+  },
+  {
+    id: 'preset_minimal_linen',
+    name: 'Clean Minimalist Paper',
+    description: 'Understated slate grey with clean crisp neutral typography',
+    lidColor: '#1E293B',
+    sideColor: '#0F172A',
+    trayColor: '#020617',
+    accentColor: '#94A3B8',
+    fontFamily: 'Public Sans',
+    titleColor: '#F8FAFC',
+    subtitleColor: '#94A3B8'
+  }
+];
+
+const customDesignPresets = ref<BoxDesignPreset[]>([]);
+const selectedPresetId = ref<string>('preset_obsidian_gold');
+const presetBatchScope = ref<'current' | 'group' | 'all' | 'custom'>('current');
+const batchSelectedBoxIds = ref<string[]>([]);
+const newPresetName = ref<string>('');
+
+const allDesignPresets = computed(() => [
+  ...builtInDesignPresets,
+  ...customDesignPresets.value
+]);
+
+const activeDesignPreset = computed(() => {
+  return allDesignPresets.value.find(p => p.id === selectedPresetId.value) || allDesignPresets.value[0];
+});
+
+const groupedBoxes = computed(() => {
+  const groups: Record<string, BoxDieline[]> = {};
+  BOX_GROUPS.forEach(g => { groups[g] = []; });
+  boxDielines.value.forEach(b => {
+    const grp = b.group || 'Main Box';
+    if (!groups[grp]) groups[grp] = [];
+    groups[grp].push(b);
+  });
+  return groups;
+});
+
+function handleZoomIn() {
+  zoomLevel.value = Math.min(3, +(zoomLevel.value + 0.25).toFixed(2));
+}
+
+function handleZoomOut() {
+  zoomLevel.value = Math.max(0.5, +(zoomLevel.value - 0.25).toFixed(2));
+}
+
+function handleZoomReset() {
+  zoomLevel.value = 1;
+}
 
 const boxTemplates: { id: BoxTemplateType; label: string; desc: string }[] = [
   { id: 'telescope-2part', label: '2-Piece Telescoping Box', desc: 'Separate top lid and bottom tray that fit together with clearance' },
@@ -47,11 +183,13 @@ const boxPresets = [
 ];
 
 // Visual scaling factor for 2D net canvas preview
-const scale = computed(() => {
+const baseScale = computed(() => {
   if (!activeBox.value) return 1;
   const maxDim = Math.max(activeBox.value.targetDimensions.width, activeBox.value.targetDimensions.depth) + activeBox.value.targetDimensions.height * 2;
   return Math.min(1.2, 450 / Math.max(300, maxDim));
 });
+
+const scale = computed(() => baseScale.value * zoomLevel.value);
 
 // Canvas Transform Composable with Dynamic Smart Guides
 const { startDrag, startResize, activeSmartGuides } = useCanvasTransform({
@@ -173,165 +311,120 @@ function handleAddText() {
   showToast('Added draggable text box to box net');
 }
 
-function handleAddImageFrame(bgUrl?: string) {
+// Add Placeholder Box (Header strip, footer, logo box, side panel, barcode box, etc.)
+function handleAddBox(preset: { shapeType: ShapeType; placeholderType: PlaceholderPreset; label: string; icon?: string }) {
   snapshotState();
+  let w = 70;
+  let h = 25;
+  let bg = 'rgba(30, 41, 59, 0.75)';
+  let border = '#F59E0B';
+  let bWidth = 1.5;
+  let bStyle: 'solid' | 'dashed' | 'dotted' | 'none' = 'solid';
+  let radius = 3;
+
+  if (preset.placeholderType === 'header') {
+    w = 120;
+    h = 16;
+    bg = '#0F172A';
+  } else if (preset.placeholderType === 'footer') {
+    w = 120;
+    h = 14;
+    bg = '#0B0F17';
+    border = '#334155';
+  } else if (preset.placeholderType === 'portrait') {
+    w = 60;
+    h = 60;
+    bg = '#1E293B';
+    bStyle = 'dashed';
+  } else if (preset.shapeType === 'hex') {
+    w = 40;
+    h = 40;
+    bg = '#1E293B';
+  } else if (preset.shapeType === 'circle') {
+    w = 30;
+    h = 30;
+    bg = '#D97706';
+    radius = 9999;
+  }
+
   const newEl: CanvasElement = {
-    id: `el_img_${Date.now()}`,
-    name: 'Logo / Art Frame',
-    type: 'image-frame',
+    id: `el_box_${Date.now()}`,
+    name: preset.label,
+    type: 'shape',
+    shapeType: preset.shapeType,
+    placeholderType: preset.placeholderType,
+    placeholderLabel: preset.label,
+    showPlaceholderLabel: true,
     x: 25,
     y: 25,
-    width: 50,
-    height: 40,
+    width: w,
+    height: h,
     rotation: 0,
     zIndex: currentElements.value.length + 1,
     locked: false,
     hidden: false,
     opacity: 1,
-    bgImageUrl: bgUrl || '',
-    fgImageUrl: '',
-    imageFit: 'contain',
-    borderWidth: 1,
-    borderColor: '#38BDF8',
-    borderStyle: 'dashed',
-    borderRadius: 2,
-    backgroundColor: 'rgba(15, 23, 42, 0.7)'
+    backgroundColor: bg,
+    borderColor: border,
+    borderWidth: bWidth,
+    borderStyle: bStyle,
+    borderRadius: radius,
+    iconGlyph: preset.icon || '📦',
+    isFlipped: false
   };
+
   currentElements.value.push(newEl);
   selectedElementId.value = newEl.id;
   persistChanges();
-  showToast('Added image box to box net');
+  showToast(`Added ${preset.label} to box net`);
 }
 
-function handleAddIconElement(icon: TabletopIcon) {
-  snapshotState();
-  const newEl: CanvasElement = {
-    id: `el_ico_${Date.now()}`,
-    name: `${icon.name} Emblem`,
-    type: 'icon',
-    x: 30,
-    y: 30,
-    width: 20,
-    height: 20,
-    rotation: 0,
-    zIndex: currentElements.value.length + 1,
-    locked: false,
-    hidden: false,
-    opacity: 1,
-    iconGlyph: icon.glyph,
-    iconColor: '#F59E0B'
-  };
-  currentElements.value.push(newEl);
-  selectedElementId.value = newEl.id;
-  persistChanges();
-  showToast(`Added ${icon.name} to box net`);
-}
-
-function handleInsertInlineIcon(icon: TabletopIcon) {
-  if (activeElement.value && activeElement.value.type === 'text') {
-    snapshotState();
-    activeElement.value.text = (activeElement.value.text || '') + ` ${icon.glyph} `;
-    persistChanges();
-    showToast(`Inserted ${icon.glyph} inline`);
-  }
-}
-
-function handleSetPortraitIcon(icon: TabletopIcon) {
-  handleAddIconElement(icon);
-}
-
-function handleAlign(direction: 'left' | 'center-h' | 'right' | 'top' | 'center-v' | 'bottom') {
-  if (!activeElement.value || !activeBox.value) return;
-  snapshotState();
-  const el = activeElement.value;
-  const w = activeBox.value.targetDimensions.width;
-  const h = activeBox.value.targetDimensions.depth;
-
-  if (direction === 'left') el.x = 4;
-  else if (direction === 'center-h') el.x = Math.round((w - el.width) / 2);
-  else if (direction === 'right') el.x = Math.round(w - el.width - 4);
-  else if (direction === 'top') el.y = 4;
-  else if (direction === 'center-v') el.y = Math.round((h - el.height) / 2);
-  else if (direction === 'bottom') el.y = Math.round(h - el.height - 4);
-
-  persistChanges();
-  showToast(`Aligned ${direction}`);
-}
-
-function handleDuplicateElement() {
-  if (!activeElement.value) return;
-  snapshotState();
-  const clone: CanvasElement = {
-    ...JSON.parse(JSON.stringify(activeElement.value)),
-    id: `el_clone_${Date.now()}`,
-    name: `${activeElement.value.name} (Copy)`,
-    x: activeElement.value.x + 6,
-    y: activeElement.value.y + 6,
-    zIndex: currentElements.value.length + 1
-  };
-  currentElements.value.push(clone);
-  selectedElementId.value = clone.id;
-  persistChanges();
-  showToast('Duplicated box element');
-}
-
-function handleDeleteElement(id: string) {
-  snapshotState();
-  const index = currentElements.value.findIndex(el => el.id === id);
-  if (index >= 0) {
-    currentElements.value.splice(index, 1);
-    selectedElementId.value = null;
-    persistChanges();
-    showToast('Deleted box element');
-  }
-}
-
-function handleMoveLayerUp(el: CanvasElement) {
-  snapshotState();
-  el.zIndex = (el.zIndex || 0) + 1;
-  persistChanges();
-}
-
-function handleMoveLayerDown(el: CanvasElement) {
-  snapshotState();
-  el.zIndex = Math.max(1, (el.zIndex || 0) - 1);
-  persistChanges();
-}
-
-function applyPreset(p: typeof boxPresets[0]) {
+function handleBlankCanvas() {
   if (!activeBox.value) return;
   snapshotState();
-  activeBox.value.targetDimensions.width = p.w;
-  activeBox.value.targetDimensions.depth = p.d;
-  activeBox.value.targetDimensions.height = p.h;
-  activeBox.value.templateType = p.type;
+  activeBox.value.elements = [];
+  activeBox.value.panels = {
+    lidTop: { title: '', subtitle: '', bgColor: '#0F172A', accentColor: '#334155' },
+    lidSides: { text: '', color: '#0F172A' },
+    trayBottom: { text: '', color: '#0F172A' }
+  };
+  activeBox.value.showDefaultLabels = false;
+  selectedElementId.value = null;
   persistChanges();
-  showToast(`Applied preset: ${p.name}`);
+  showToast('Box net cleared to blank canvas!');
 }
 
-function handleCreateBox() {
-  const newId = `box_${Date.now()}`;
-  const newBox: BoxDieline = {
-    _id: newId,
-    projectId: 'proj_iron_stone',
-    templateType: 'telescope-2part',
-    name: 'New Custom Box',
-    targetDimensions: { width: 180, depth: 180, height: 40 },
-    materialThicknessMm: 1.5,
-    lidClearanceMm: 1.5,
-    flangeWidthMm: 15,
-    panels: {
-      lidTop: { title: 'EXPANSION PACK', subtitle: 'NEW QUESTS', bgColor: '#0F172A', accentColor: '#F59E0B' },
-      lidSides: { text: 'EXPANSION · 1-4 PLAYERS', color: '#1E293B' },
-      trayBottom: { text: 'CONTAINS 60 EXPANSION CARDS & 12 STANDS', color: '#0B0F17' }
-    },
-    elements: []
-  };
-  boxDielines.value.push(newBox);
-  selectedBoxId.value = newId;
-  saveBoxDieline(newBox);
-  showToast('Created new box dieline');
+function handleClearDefaultContent() {
+  if (!activeBox.value) return;
+  snapshotState();
+  if (!activeBox.value.panels) {
+    activeBox.value.panels = {};
+  }
+  if (!activeBox.value.panels.lidTop) activeBox.value.panels.lidTop = { title: '', subtitle: '', bgColor: '#0F172A', accentColor: '#334155' };
+  activeBox.value.panels.lidTop.title = '';
+  activeBox.value.panels.lidTop.subtitle = '';
+  if (!activeBox.value.panels.lidSides) activeBox.value.panels.lidSides = { text: '', color: '#0F172A' };
+  activeBox.value.panels.lidSides.text = '';
+  if (!activeBox.value.panels.trayBottom) activeBox.value.panels.trayBottom = { text: '', color: '#0F172A' };
+  activeBox.value.panels.trayBottom.text = '';
+  activeBox.value.showDefaultLabels = false;
+  persistChanges();
+  showToast('Cleared all default box labels and text');
 }
+
+function handleApplyTemplate() {
+  if (!activeBox.value) return;
+  snapshotState();
+  activeBox.value.showDefaultLabels = true;
+  activeBox.value.panels = {
+    lidTop: { title: activeBox.value.name.toUpperCase(), subtitle: 'TACTICAL TABLETOP GAME', bgColor: '#0F172A', accentColor: '#F59E0B' },
+    lidSides: { text: '1-4 PLAYERS · AGE 14+ · 60 MIN', color: '#1E293B' },
+    trayBottom: { text: 'CONTAINS: Cards, Tokens, Standees, Boards, and Rules Codex.', color: '#0B0F17' }
+  };
+  persistChanges();
+  showToast('Applied box template');
+}
+
 </script>
 
 <template>
@@ -401,11 +494,18 @@ function handleCreateBox() {
       <AlignmentBar
         :has-selection="!!activeElement"
         :is-locked="activeElement?.locked"
+        :zoom="zoomLevel"
         @undo="handleUndo"
         @redo="handleRedo"
         @add-text="handleAddText"
         @add-image-frame="handleAddImageFrame"
+        @add-box="handleAddBox"
+        @blank-canvas="handleBlankCanvas"
+        @apply-template="handleApplyTemplate"
         @open-icons="showIconModal = true"
+        @zoom-in="handleZoomIn"
+        @zoom-out="handleZoomOut"
+        @zoom-reset="handleZoomReset"
         @align="handleAlign"
         @duplicate="handleDuplicateElement"
         @delete="activeElement && handleDeleteElement(activeElement.id)"

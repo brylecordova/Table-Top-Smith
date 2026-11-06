@@ -16,15 +16,19 @@ const emit = defineEmits<{
 }>();
 
 const searchQuery = ref('');
-const selectedCategory = ref<'all' | 'combat' | 'magic' | 'resources' | 'dice' | 'factions'>('all');
+const selectedCategory = ref<string>('all');
 
 const categories = [
   { id: 'all', label: 'All Icons' },
   { id: 'combat', label: '⚔️ Combat' },
   { id: 'magic', label: '🔮 Magic' },
   { id: 'resources', label: '🪙 Resources' },
-  { id: 'dice', label: '🎲 Tabletop' },
-  { id: 'factions', label: '🐉 Factions' }
+  { id: 'dice', label: '🎲 Dice & Chance' },
+  { id: 'conditions', label: '💫 Status & Effects' },
+  { id: 'exploration', label: '🗺️ Exploration & Map' },
+  { id: 'stats', label: '❤️ Attributes & HP' },
+  { id: 'factions', label: '🐉 Monsters & Factions' },
+  { id: 'ui', label: '👑 UI & Objectives' }
 ];
 
 const filteredIcons = computed(() => {

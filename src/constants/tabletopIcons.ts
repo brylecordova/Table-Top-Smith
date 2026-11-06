@@ -1,7 +1,7 @@
 import type { TabletopIcon } from '../types/index.ts';
 
 export const TABLETOP_ICONS: TabletopIcon[] = [
-  // Combat
+  // 1. Combat & Weapons
   { id: 'sword', name: 'Broadsword', glyph: '⚔️', category: 'combat', description: 'Physical attack power' },
   { id: 'shield', name: 'Kite Shield', glyph: '🛡️', category: 'combat', description: 'Armor and block defense' },
   { id: 'bow', name: 'Longbow', glyph: '🏹', category: 'combat', description: 'Ranged pierce attack' },
@@ -12,8 +12,13 @@ export const TABLETOP_ICONS: TabletopIcon[] = [
   { id: 'target', name: 'Crosshairs', glyph: '🎯', category: 'combat', description: 'Accuracy and critical range' },
   { id: 'armor', name: 'Steel Armor', glyph: '🥋', category: 'combat', description: 'Damage reduction value' },
   { id: 'bomb', name: 'Powder Bomb', glyph: '💣', category: 'combat', description: 'Area of effect explosion' },
+  { id: 'hammer', name: 'Warhammer', glyph: '🔨', category: 'combat', description: 'Blunt armor-crushing trauma' },
+  { id: 'scythe', name: 'Reaper Scythe', glyph: '🌾', category: 'combat', description: 'Wide sweep soul harvest' },
+  { id: 'spear', name: 'Trident / Spear', glyph: '🔱', category: 'combat', description: 'Reach attack and impale' },
+  { id: 'boom', name: 'Explosive Impact', glyph: '💥', category: 'combat', description: 'Direct burst strike' },
+  { id: 'helmet', name: 'Knight Helm', glyph: '🪖', category: 'combat', description: 'Head protection and fortitude' },
 
-  // Magic
+  // 2. Magic & Arcana
   { id: 'orb', name: 'Arcane Orb', glyph: '🔮', category: 'magic', description: 'Spellcasting power' },
   { id: 'fire', name: 'Pyromancy Fire', glyph: '🔥', category: 'magic', description: 'Burn and fire damage' },
   { id: 'ice', name: 'Frost Nova', glyph: '❄️', category: 'magic', description: 'Freeze and slow effect' },
@@ -23,37 +28,104 @@ export const TABLETOP_ICONS: TabletopIcon[] = [
   { id: 'portal', name: 'Dimensional Rift', glyph: '🌀', category: 'magic', description: 'Teleportation node' },
   { id: 'spark', name: 'Divine Radiance', glyph: '✨', category: 'magic', description: 'Holy buff and blessing' },
   { id: 'candle', name: 'Ritual Candle', glyph: '🕯️', category: 'magic', description: 'Channeled dark ritual' },
+  { id: 'wand', name: 'Magic Wand', glyph: '🪄', category: 'magic', description: 'Channeled focus implement' },
+  { id: 'comet', name: 'Star Meteor', glyph: '☄️', category: 'magic', description: 'Catastrophic celestial impact' },
+  { id: 'eye_amulet', name: 'All-Seeing Eye', glyph: '🧿', category: 'magic', description: 'Ward against hexes and curses' },
+  { id: 'ring_power', name: 'Ring of Power', glyph: '💍', category: 'magic', description: 'Continuous enchanted passive' },
 
-  // Resources
+  // 3. Resources & Currencies
   { id: 'gold', name: 'Gold Coin', glyph: '💰', category: 'resources', description: 'Standard currency marker' },
+  { id: 'coin', name: 'Single Coin', glyph: '🪙', category: 'resources', description: 'Basic denomination coin' },
   { id: 'gem', name: 'Arcane Ruby', glyph: '💎', category: 'resources', description: 'High-value rare treasure' },
-  { id: 'wood', name: 'Timber Log', glyph: '🌲', category: 'resources', description: 'Crafting material wood' },
+  { id: 'wood', name: 'Timber Log', glyph: '🪵', category: 'resources', description: 'Crafting material wood' },
   { id: 'ore', name: 'Iron Pickaxe', glyph: '⛏️', category: 'resources', description: 'Metal mining resource' },
+  { id: 'stone', name: 'Quarried Stone', glyph: '🪨', category: 'resources', description: 'Masonry building block' },
   { id: 'key', name: 'Dungeon Key', glyph: '🗝️', category: 'resources', description: 'Unlocks vault or portal' },
   { id: 'meat', name: 'Ration Meat', glyph: '🥩', category: 'resources', description: 'Supplies and upkeep' },
   { id: 'bread', name: 'Provision Bread', glyph: '🍞', category: 'resources', description: 'Camp nourishment' },
+  { id: 'fish', name: 'Ration Fish', glyph: '🐟', category: 'resources', description: 'Coastal expedition rations' },
   { id: 'mana', name: 'Mana Droplet', glyph: '💧', category: 'resources', description: 'Energy pool point' },
   { id: 'chest', name: 'Treasure Chest', glyph: '📦', category: 'resources', description: 'Loot reward cache' },
-  { id: 'pouch', name: 'Coin Pouch', glyph: '🪙', category: 'resources', description: 'Bank reserve' },
+  { id: 'crate', name: 'Supply Crate', glyph: '🧰', category: 'resources', description: 'Logistics cargo box' },
+  { id: 'grain', name: 'Harvest Grain', glyph: '🌾', category: 'resources', description: 'Agriculture harvest yield' },
 
-  // Dice & Tabletop
+  // 4. Dice & Chance
   { id: 'd20', name: 'Twenty-Sided Die', glyph: '🎲', category: 'dice', description: 'Check resolution roll' },
-  { id: 'd6', name: 'Game Die', glyph: '🎯', category: 'dice', description: 'Action point dice check' },
+  { id: 'd6_six', name: 'Game Die 6', glyph: '⚅', category: 'dice', description: 'Maximum single die check' },
+  { id: 'd6_one', name: 'Game Die 1', glyph: '⚀', category: 'dice', description: 'Critical botch or fail' },
+  { id: 'cards_deck', name: 'Draw Deck', glyph: '🂠', category: 'dice', description: 'Shuffled draw pile' },
+  { id: 'slot_luck', name: 'Fortune Wheel', glyph: '🎰', category: 'dice', description: 'High variance gamble roll' },
   { id: 'hourglass', name: 'Turn Timer', glyph: '⏳', category: 'dice', description: 'Round count or cooldown' },
-  { id: 'boot', name: 'Swift Boots', glyph: '👢', category: 'dice', description: 'Movement speed points' },
-  { id: 'heart', name: 'Vitality Heart', glyph: '❤️', category: 'dice', description: 'Maximum life health points' },
-  { id: 'crown', name: 'Victory Crown', glyph: '👑', category: 'dice', description: 'Victory point objective' },
-  { id: 'flag', name: 'Faction Banner', glyph: '🚩', category: 'dice', description: 'Territory control mark' },
-  { id: 'compass', name: 'Scout Compass', glyph: '🧭', category: 'dice', description: 'Exploration and direction' },
-  { id: 'book', name: 'Grimoire Tome', glyph: '📖', category: 'dice', description: 'Rulebook codex' },
+  { id: 'stopwatch', name: 'Round Stopwatch', glyph: '⏱️', category: 'dice', description: 'Tactical action timing' },
+  { id: 'clover', name: 'Four-Leaf Clover', glyph: '🍀', category: 'dice', description: 'Bonus luck modifier' },
 
-  // Factions & Monsters
+  // 5. Conditions & Status Effects
+  { id: 'dizzy_stun', name: 'Stunned', glyph: '💫', category: 'conditions', description: 'Cannot take active actions' },
+  { id: 'poison', name: 'Poison Status', glyph: '☣️', category: 'conditions', description: 'Damage at start of turn' },
+  { id: 'sleep', name: 'Sleeping / Dormant', glyph: '💤', category: 'conditions', description: 'Awakens when dealt damage' },
+  { id: 'mute', name: 'Silenced', glyph: '🤫', category: 'conditions', description: 'Cannot cast spells' },
+  { id: 'blind', name: 'Blinded', glyph: '🙈', category: 'conditions', description: 'Disadvantage on attacks' },
+  { id: 'enraged', name: 'Berserk Rage', glyph: '💢', category: 'conditions', description: 'Attack +2, Defense -2' },
+  { id: 'curse', name: 'Cursed Mark', glyph: '🪬', category: 'conditions', description: 'Reduces healing received' },
+  { id: 'blessed', name: 'Blessed Dove', glyph: '🕊️', category: 'conditions', description: 'Ward from fatal blows' },
+  { id: 'invisible', name: 'Stealth Invisibility', glyph: '👁️‍🗨️', category: 'conditions', description: 'Cannot be targeted directly' },
+
+  // 6. Exploration & Map (for Board and Tile Flip Maps)
+  { id: 'fog_war', name: 'Fog of War', glyph: '🌫️', category: 'exploration', description: 'Unexplored hidden tile' },
+  { id: 'compass', name: 'Scout Compass', glyph: '🧭', category: 'exploration', description: 'Exploration and direction' },
+  { id: 'map_scroll', name: 'Torn Map', glyph: '🗺️', category: 'exploration', description: 'Reveals adjacent nodes' },
+  { id: 'castle', name: 'Stronghold Keep', glyph: '🏰', category: 'exploration', description: 'Fortified player base' },
+  { id: 'mountain', name: 'Crag Peak', glyph: '⛰️', category: 'exploration', description: 'Impassable terrain' },
+  { id: 'camp', name: 'Resting Campfire', glyph: '🏕️', category: 'exploration', description: 'Safe recovery outpost' },
+  { id: 'gate', name: 'Dungeon Gate', glyph: '🚪', category: 'exploration', description: 'Entrance to underground vault' },
+  { id: 'cave', name: 'Cavern Entrance', glyph: '🕳️', category: 'exploration', description: 'Subterranean passage' },
+  { id: 'volcano', name: 'Active Volcano', glyph: '🌋', category: 'exploration', description: 'Lava hazard area' },
+  { id: 'desert', name: 'Desert Dune', glyph: '🏜️', category: 'exploration', description: 'Arid stamina drain' },
+  { id: 'island', name: 'Uncharted Island', glyph: '🏝️', category: 'exploration', description: 'Secluded secret cache' },
+  { id: 'ship', name: 'Galleon Ship', glyph: '⛵', category: 'exploration', description: 'Naval vessel transit' },
+  { id: 'shrine', name: 'Mystic Torii Shrine', glyph: '⛩️', category: 'exploration', description: 'Statue granting blessings' },
+  { id: 'graveyard', name: 'Ancient Tomb', glyph: '🪦', category: 'exploration', description: 'Undead spawning grounds' },
+  { id: 'tavern', name: 'Wayfarer Tavern', glyph: '🍺', category: 'exploration', description: 'Hire mercenaries & trade rumors' },
+  { id: 'trap', name: 'Hidden Trap', glyph: '⚠️', category: 'exploration', description: 'Triggers on enter' },
+  { id: 'footprints', name: 'Beast Tracks', glyph: '🐾', category: 'exploration', description: 'Trail leading to boss' },
+
+  // 7. Stats & Attributes
+  { id: 'heart', name: 'Vitality Heart', glyph: '❤️', category: 'stats', description: 'Maximum life health points' },
+  { id: 'health_cross', name: 'Aid Cross', glyph: '🩺', category: 'stats', description: 'Healing restoration rate' },
+  { id: 'energy', name: 'Stamina Battery', glyph: '🔋', category: 'stats', description: 'Action stamina resource' },
+  { id: 'fist', name: 'Strength Fist', glyph: '✊', category: 'stats', description: 'Melee power and brute force' },
+  { id: 'wing', name: 'Agility Wing', glyph: '🪽', category: 'stats', description: 'Evasion and initiative' },
+  { id: 'brain', name: 'Intellect Brain', glyph: '🧠', category: 'stats', description: 'Spell knowledge and checks' },
+  { id: 'eye', name: 'Perception Eye', glyph: '👁️', category: 'stats', description: 'Detects secret doors and traps' },
+  { id: 'speech', name: 'Charisma Dialogue', glyph: '💬', category: 'stats', description: 'Negotiation and persuasion' },
+  { id: 'boot', name: 'Movement Boots', glyph: '👢', category: 'stats', description: 'Board movement points' },
+
+  // 8. Factions & Monsters
   { id: 'dragon', name: 'Ancient Dragon', glyph: '🐉', category: 'factions', description: 'Apex boss enemy' },
   { id: 'beast', name: 'Dire Wolf', glyph: '🐺', category: 'factions', description: 'Wild predator encounter' },
   { id: 'eagle', name: 'War Griffin', glyph: '🦅', category: 'factions', description: 'Aerial allied mount' },
   { id: 'zombie', name: 'Undead Walker', glyph: '🧟', category: 'factions', description: 'Swarm ghoul minion' },
   { id: 'wizard', name: 'Grand Magus', glyph: '🧙', category: 'factions', description: 'Arcanist hero' },
-  { id: 'rogue', name: 'Shadow Shinobi', glyph: '👤', category: 'factions', description: 'Stealth infiltrator' },
-  { id: 'castle', name: 'Stronghold Keep', glyph: '🏰', category: 'factions', description: 'Fortified player base' },
-  { id: 'mountain', name: 'Crag Peak', glyph: '⛰️', category: 'factions', description: 'Impassable terrain' }
+  { id: 'knight', name: 'Vanguard Knight', glyph: '🤺', category: 'factions', description: 'Frontline armored defender' },
+  { id: 'rogue', name: 'Shadow Assassin', glyph: '👤', category: 'factions', description: 'Stealth infiltrator' },
+  { id: 'goblin', name: 'Forest Goblin', glyph: '👺', category: 'factions', description: 'Scavenger ambusher' },
+  { id: 'vampire', name: 'Blood Vampire', glyph: '🧛', category: 'factions', description: 'Lifesteal elite enemy' },
+  { id: 'kraken', name: 'Abyssal Kraken', glyph: '🐙', category: 'factions', description: 'Deep sea raid boss' },
+  { id: 'spider', name: 'Brood Spider', glyph: '🕷️', category: 'factions', description: 'Web trap spinner' },
+  { id: 'ghost', name: 'Vengeful Specter', glyph: '👻', category: 'factions', description: 'Ethereal incorporeal ghost' },
+
+  // 9. UI & Game Loop Tokens
+  { id: 'crown', name: 'Victory Crown', glyph: '👑', category: 'ui', description: 'Victory point objective' },
+  { id: 'trophy', name: 'Champion Trophy', glyph: '🏆', category: 'ui', description: 'Match winner indicator' },
+  { id: 'flag', name: 'Territory Banner', glyph: '🚩', category: 'ui', description: 'Control point banner' },
+  { id: 'star', name: 'Gold Star', glyph: '⭐', category: 'ui', description: 'Tier rating or favor point' },
+  { id: 'check', name: 'Checkmark Pass', glyph: '✅', category: 'ui', description: 'Completed mission / condition' },
+  { id: 'cross', name: 'Denied X', glyph: '❌', category: 'ui', description: 'Failed check or forbidden zone' },
+  { id: 'trade', name: 'Handshake Trade', glyph: '🤝', category: 'ui', description: 'Player bartering phase' },
+  { id: 'upgrade', name: 'Level Up Arrow', glyph: '⬆️', category: 'ui', description: 'Hero rank promotion' },
+  { id: 'lock', name: 'Locked Seal', glyph: '🔒', category: 'ui', description: 'Requires key to access' },
+  { id: 'unlock', name: 'Open Latch', glyph: '🔓', category: 'ui', description: 'Unlocked accessible state' },
+  { id: 'refresh', name: 'Cycle / Refresh', glyph: '🔄', category: 'ui', description: 'Untap / phase upkeep' },
+  { id: 'trash', name: 'Banish / Discard', glyph: '🗑️', category: 'ui', description: 'Remove from current game' },
+  { id: 'book', name: 'Rule Codex', glyph: '📖', category: 'ui', description: 'Game rulebook reference' }
 ];

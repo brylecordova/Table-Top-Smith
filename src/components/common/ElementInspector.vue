@@ -9,7 +9,10 @@ import {
   Unlock,
   Eye,
   EyeOff,
-  Palette
+  Palette,
+  Square,
+  Hexagon,
+  RefreshCw
 } from 'lucide-vue-next';
 
 const props = defineProps<{
@@ -238,6 +241,31 @@ function notifyChange() {
         </div>
       </div>
 
+      <!-- Text Container Background / Fill Option -->
+      <div class="p-2 bg-slate-900/80 border border-slate-800 rounded-lg space-y-1.5">
+        <div class="flex items-center justify-between">
+          <span class="text-[10px] text-slate-400 font-mono">Text Container Background</span>
+          <button
+            @click="props.element.textHasBackground = !props.element.textHasBackground; if (!props.element.textHasBackground) props.element.textBackgroundColor = 'transparent'; notifyChange()"
+            class="px-2 py-0.5 rounded text-[10px] font-mono border"
+            :class="props.element.textHasBackground === false || props.element.textBackgroundColor === 'transparent'
+              ? 'bg-slate-800 text-slate-300 border-slate-700'
+              : 'bg-amber-400/20 text-amber-300 border-amber-400/40'"
+          >
+            {{ props.element.textHasBackground === false || props.element.textBackgroundColor === 'transparent' ? 'Transparent (No Fill)' : 'Solid / Pill Fill' }}
+          </button>
+        </div>
+        <div v-if="props.element.textHasBackground !== false && props.element.textBackgroundColor !== 'transparent'" class="flex items-center gap-2 pt-1">
+          <span class="text-[9px] text-slate-500 font-mono">Fill Color:</span>
+          <input
+            type="color"
+            v-model="props.element.textBackgroundColor"
+            @input="notifyChange"
+            class="flex-1 h-6 rounded bg-transparent cursor-pointer border border-slate-700"
+          />
+        </div>
+      </div>
+
       <label class="flex items-center gap-2 text-xs text-slate-300 cursor-pointer pt-1">
         <input
           type="checkbox"
@@ -254,16 +282,33 @@ function notifyChange() {
           <button
             @click="emit('open-icons')"
             class="text-[10px] text-amber-400 hover:text-amber-300 flex items-center gap-1 font-mono"
+            title="Open Full Tabletop Icon Library"
           >
             <Sparkles class="w-3 h-3" />
-            + Icon
+            + Icon Library
           </button>
         </div>
+
+        <!-- Quick 1-click inline icon tokens -->
+        <div class="flex items-center gap-1 my-1 overflow-x-auto pb-0.5">
+          <span class="text-[9px] text-slate-500 font-mono shrink-0">Quick Icons:</span>
+          <button
+            v-for="sym in ['⚔️', '🛡️', '❤️', '🎲', '🪙', '✨', '📜', '👑', '🏹', '🧪']"
+            :key="sym"
+            @click="props.element.text = (props.element.text || '') + (props.element.text ? ' ' : '') + sym; notifyChange()"
+            class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-xs shrink-0 transition-colors"
+            :title="`Insert ${sym} inline`"
+          >
+            {{ sym }}
+          </button>
+        </div>
+
         <textarea
           v-model="props.element.text"
           @input="notifyChange"
           rows="3"
-          class="w-full bg-[#1E293B] border border-slate-700 rounded p-2 text-xs text-white font-sans mt-1 resize-none"
+          placeholder="Enter text or inline icons..."
+          class="w-full bg-[#1E293B] border border-slate-700 rounded p-2 text-xs text-white font-sans mt-0.5 resize-none font-mono"
         ></textarea>
       </div>
     </div>
@@ -390,6 +435,337 @@ function notifyChange() {
           @input="notifyChange"
           class="w-full h-7 rounded bg-transparent cursor-pointer border border-slate-700 mt-0.5"
         />
+      </div>
+    </div>
+
+    <!-- SPECIFIC CONTROLS: SHAPE & PLACEHOLDER BOX -->
+    <div v-else-if="props.element.type === 'shape'" class="border-t border-slate-800 pt-3 space-y-3">
+      <span class="text-[10px] text-slate-500 font-mono uppercase tracking-wider flex items-center gap-1.5">
+        <Hexagon class="w-3.5 h-3.5 text-amber-400" />
+        Shape & Placeholder Box Controls
+      </span>
+
+      <!-- Shape Geometry -->
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <span class="text-[10px] text-slate-400 font-mono">Shape Geometry</span>
+          <select
+            v-model="props.element.shapeType"
+            @change="notifyChange"
+            class="w-full bg-[#1E293B] border border-slate-700 rounded px-2 py-1 text-xs text-white mt-0.5"
+          >
+            <option value="rectangle">Rectangle Box</option>
+            <option value="rounded-rect">Rounded Rectangle</option>
+            <option value="hex">Hexagon (Exploration Tile)</option>
+            <option value="circle">Circle / Coin</option>
+            <option value="badge">Shield Badge</option>
+          </select>
+        </div>
+        <div>
+          <span class="text-[10px] text-slate-400 font-mono">Placeholder Preset</span>
+          <select
+            v-model="props.element.placeholderType"
+            @change="notifyChange"
+            class="w-full bg-[#1E293B] border border-slate-700 rounded px-2 py-1 text-xs text-white mt-0.5"
+          >
+            <option value="custom">Custom Placeholder</option>
+            <option value="header">Header Bar</option>
+            <option value="footer">Footer Bar</option>
+            <option value="portrait">Hero / Art Portrait</option>
+            <option value="effect">Effect / Rules Description</option>
+            <option value="hp">Health Points / HP</option>
+            <option value="marker">Marker / Status Token</option>
+            <option value="cost">Cost / Resource Badge</option>
+            <option value="stats">Stat Strip</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Placeholder Label & Tag -->
+      <div>
+        <div class="flex items-center justify-between">
+          <span class="text-[10px] text-slate-400 font-mono">Placeholder Label Tag</span>
+          <label class="flex items-center gap-1.5 text-[10px] text-slate-400 cursor-pointer">
+            <input
+              type="checkbox"
+              v-model="props.element.showPlaceholderLabel"
+              @change="notifyChange"
+              class="rounded bg-slate-900 border-slate-700 text-amber-400 focus:ring-0"
+            />
+            <span>Show Tag Overlay</span>
+          </label>
+        </div>
+        <input
+          v-model="props.element.placeholderLabel"
+          @input="notifyChange"
+          placeholder="e.g. PORTRAIT ZONE, EFFECT DESCRIPTION, HP..."
+          class="w-full bg-[#1E293B] border border-slate-700 rounded px-2.5 py-1 text-xs text-white mt-1"
+        />
+      </div>
+
+      <!-- Colors & Borders -->
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] text-slate-500 font-mono">Box Fill Color</span>
+            <button
+              @click="props.element.backgroundColor = 'transparent'; notifyChange()"
+              class="text-[9px] text-slate-400 hover:text-amber-300 font-mono"
+            >
+              No Fill
+            </button>
+          </div>
+          <input
+            type="color"
+            v-model="props.element.backgroundColor"
+            @input="notifyChange"
+            class="w-full h-7 rounded bg-transparent cursor-pointer border border-slate-700 mt-0.5"
+          />
+        </div>
+        <div>
+          <span class="text-[10px] text-slate-500 font-mono">Border Color</span>
+          <input
+            type="color"
+            v-model="props.element.borderColor"
+            @input="notifyChange"
+            class="w-full h-7 rounded bg-transparent cursor-pointer border border-slate-700 mt-0.5"
+          />
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <span class="text-[10px] text-slate-500 font-mono">Border Style</span>
+          <select
+            v-model="props.element.borderStyle"
+            @change="notifyChange"
+            class="w-full bg-[#1E293B] border border-slate-700 rounded px-2 py-1 text-xs text-white mt-0.5"
+          >
+            <option value="solid">Solid Line</option>
+            <option value="dashed">Dashed Outline</option>
+            <option value="dotted">Dotted Outline</option>
+            <option value="none">None (Invisible)</option>
+          </select>
+        </div>
+        <div>
+          <span class="text-[10px] text-slate-500 font-mono">Border Width (mm)</span>
+          <input
+            type="number"
+            min="0"
+            max="10"
+            step="0.5"
+            v-model.number="props.element.borderWidth"
+            @input="notifyChange"
+            class="w-full bg-[#1E293B] border border-slate-700 rounded px-2 py-1 text-xs text-white font-mono mt-0.5"
+          />
+        </div>
+      </div>
+
+      <!-- Corner Radius -->
+      <div v-if="props.element.shapeType !== 'hex'">
+        <span class="text-[10px] text-slate-500 font-mono">Corner Radius (mm)</span>
+        <input
+          type="number"
+          min="0"
+          max="30"
+          v-model.number="props.element.borderRadius"
+          @input="notifyChange"
+          class="w-full bg-[#1E293B] border border-slate-700 rounded px-2 py-1 text-xs text-white font-mono mt-0.5"
+        />
+      </div>
+
+      <!-- TYPOGRAPHY & TEXT STYLING FOR HEADER / FOOTER / PLACEHOLDERS -->
+      <div class="border-t border-slate-800/80 pt-2 space-y-2">
+        <span class="text-[10px] font-semibold text-slate-400 font-mono uppercase tracking-wider flex items-center gap-1.5">
+          <Type class="w-3.5 h-3.5 text-amber-400" />
+          Text Styling & Typography
+        </span>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <span class="text-[10px] text-slate-500 font-mono">Font Family</span>
+            <select
+              v-model="props.element.fontFamily"
+              @change="notifyChange"
+              class="w-full bg-[#1E293B] border border-slate-700 rounded px-1.5 py-1 text-xs text-white mt-0.5"
+            >
+              <option v-for="f in fontOptions" :key="f.val" :value="f.val">{{ f.label }}</option>
+            </select>
+          </div>
+          <div>
+            <span class="text-[10px] text-slate-500 font-mono">Font Size (pt)</span>
+            <input
+              type="number"
+              min="6"
+              max="72"
+              v-model.number="props.element.fontSize"
+              @input="notifyChange"
+              class="w-full bg-[#1E293B] border border-slate-700 rounded px-2 py-1 text-xs text-white font-mono mt-0.5"
+            />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2">
+          <div>
+            <span class="text-[10px] text-slate-500 font-mono">Alignment</span>
+            <select
+              v-model="props.element.textAlign"
+              @change="notifyChange"
+              class="w-full bg-[#1E293B] border border-slate-700 rounded px-1.5 py-1 text-xs text-white mt-0.5"
+            >
+              <option value="left">Left</option>
+              <option value="center">Center</option>
+              <option value="right">Right</option>
+            </select>
+          </div>
+          <div>
+            <span class="text-[10px] text-slate-500 font-mono">Weight</span>
+            <select
+              v-model.number="props.element.fontWeight"
+              @change="notifyChange"
+              class="w-full bg-[#1E293B] border border-slate-700 rounded px-1.5 py-1 text-xs text-white mt-0.5"
+            >
+              <option :value="400">Regular</option>
+              <option :value="600">Semi-Bold</option>
+              <option :value="700">Bold</option>
+            </select>
+          </div>
+          <div>
+            <span class="text-[10px] text-slate-500 font-mono">Text Color</span>
+            <input
+              type="color"
+              v-model="props.element.color"
+              @input="notifyChange"
+              class="w-full h-7 rounded bg-transparent cursor-pointer border border-slate-700 mt-0.5"
+            />
+          </div>
+        </div>
+
+        <!-- Text Bounding Box Background / Transparent Fill Option -->
+        <div class="p-2 bg-slate-900/80 border border-slate-800 rounded-lg space-y-1.5">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] text-slate-400 font-mono">Text Container Background</span>
+            <button
+              @click="props.element.textHasBackground = !props.element.textHasBackground; if (!props.element.textHasBackground) props.element.textBackgroundColor = 'transparent'; notifyChange()"
+              class="px-2 py-0.5 rounded text-[10px] font-mono border transition-colors"
+              :class="props.element.textHasBackground === false || props.element.textBackgroundColor === 'transparent'
+                ? 'bg-slate-800 text-slate-300 border-slate-700'
+                : 'bg-amber-400/20 text-amber-300 border-amber-400/40'"
+            >
+              {{ props.element.textHasBackground === false || props.element.textBackgroundColor === 'transparent' ? 'Transparent (No Container Fill)' : 'Pill Container Fill' }}
+            </button>
+          </div>
+          <div v-if="props.element.textHasBackground !== false && props.element.textBackgroundColor !== 'transparent'" class="flex items-center gap-2 pt-1">
+            <span class="text-[9px] text-slate-500 font-mono">Container Color:</span>
+            <input
+              type="color"
+              v-model="props.element.textBackgroundColor"
+              @input="notifyChange"
+              class="flex-1 h-6 rounded bg-transparent cursor-pointer border border-slate-700"
+            />
+          </div>
+        </div>
+
+        <!-- Optional Subtext / Rules Content -->
+        <div>
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] text-slate-500 font-mono">Subtext / Rules Snippet</span>
+            <button
+              @click="emit('open-icons')"
+              class="text-[10px] text-amber-400 hover:text-amber-300 flex items-center gap-1 font-mono"
+            >
+              <Sparkles class="w-3 h-3" />
+              + Icon
+            </button>
+          </div>
+          <textarea
+            v-model="props.element.text"
+            @input="notifyChange"
+            rows="2"
+            placeholder="Optional subtext, ability rules or flavor text..."
+            class="w-full bg-[#1E293B] border border-slate-700 rounded p-1.5 text-xs text-white font-sans mt-0.5 resize-none font-mono"
+          ></textarea>
+        </div>
+      </div>
+
+      <!-- Icon in Box -->
+      <div class="border-t border-slate-800/80 pt-2">
+        <span class="text-[10px] text-slate-500 font-mono">Box Icon Glyph</span>
+        <div class="flex items-center gap-1.5 mt-0.5">
+          <input
+            v-model="props.element.iconGlyph"
+            @input="notifyChange"
+            placeholder="e.g. ⚔️"
+            class="w-12 bg-[#1E293B] border border-slate-700 rounded px-2 py-1 text-xs text-white text-center"
+          />
+          <button
+            @click="emit('open-icons')"
+            class="py-1 px-2 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-mono flex items-center gap-1"
+          >
+            <Sparkles class="w-3 h-3 text-amber-400" />
+            Choose Tabletop Icon...
+          </button>
+        </div>
+      </div>
+
+      <!-- EXPLORATION TILE FLIP SETTINGS (FOR HEXAGONS & MAP TILES) -->
+      <div v-if="props.element.shapeType === 'hex' || props.element.isFlipped !== undefined" class="border-t border-slate-800/80 pt-2 space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-[10px] font-semibold text-amber-300 font-mono uppercase tracking-wider flex items-center gap-1">
+            <RefreshCw class="w-3 h-3 text-amber-400" />
+            Exploration Tile Flip Mode
+          </span>
+          <button
+            @click="props.element.isFlipped = !props.element.isFlipped; notifyChange()"
+            class="px-2 py-0.5 rounded text-[10px] font-mono border"
+            :class="props.element.isFlipped ? 'bg-amber-400 text-slate-950 border-amber-500 font-bold' : 'bg-slate-800 text-slate-300 border-slate-700'"
+          >
+            {{ props.element.isFlipped ? 'Currently Revealed' : 'Currently Unexplored' }}
+          </button>
+        </div>
+
+        <div class="bg-slate-950/60 p-2.5 rounded-lg border border-slate-800 space-y-2">
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <span class="text-[9px] text-slate-400 font-mono">Revealed Title</span>
+              <input
+                v-model="props.element.flippedTitle"
+                @input="notifyChange"
+                placeholder="e.g. Dragon Lair"
+                class="w-full bg-[#1E293B] border border-slate-700 rounded px-2 py-0.5 text-xs text-white mt-0.5"
+              />
+            </div>
+            <div>
+              <span class="text-[9px] text-slate-400 font-mono">Revealed Icon</span>
+              <input
+                v-model="props.element.flippedIcon"
+                @input="notifyChange"
+                placeholder="e.g. 🐉"
+                class="w-full bg-[#1E293B] border border-slate-700 rounded px-2 py-0.5 text-xs text-white text-center mt-0.5"
+              />
+            </div>
+          </div>
+
+          <div>
+            <span class="text-[9px] text-slate-400 font-mono">Revealed Event / Rule Description</span>
+            <input
+              v-model="props.element.flippedDescription"
+              @input="notifyChange"
+              placeholder="e.g. Boss spawns. All players roll initiative!"
+              class="w-full bg-[#1E293B] border border-slate-700 rounded px-2 py-0.5 text-xs text-white mt-0.5"
+            />
+          </div>
+
+          <div>
+            <span class="text-[9px] text-slate-400 font-mono">Revealed Color Tint</span>
+            <input
+              type="color"
+              v-model="props.element.flippedColor"
+              @input="notifyChange"
+              class="w-full h-6 rounded bg-transparent cursor-pointer border border-slate-700 mt-0.5"
+            />
+          </div>
+        </div>
       </div>
     </div>
   </div>

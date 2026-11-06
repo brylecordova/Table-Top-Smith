@@ -17,7 +17,7 @@ import {
   Copy,
   Sliders
 } from 'lucide-vue-next';
-import type { StandeeItem, CanvasElement, TabletopIcon } from '../../types/index.ts';
+import type { StandeeItem, CanvasElement, TabletopIcon, ShapeType, PlaceholderPreset } from '../../types/index.ts';
 import TransformBox from '../common/TransformBox.vue';
 import AlignmentBar from '../common/AlignmentBar.vue';
 import ElementInspector from '../common/ElementInspector.vue';
@@ -29,8 +29,21 @@ const selectedStandeeId = ref<string>('');
 const selectedElementId = ref<string | null>(null);
 const isFoldOverMode = ref<boolean>(false);
 const showIconModal = ref(false);
+const zoomLevel = ref<number>(1);
 
-const standeeScale = 4.0;
+const standeeScale = computed(() => 4.0 * zoomLevel.value);
+
+function handleZoomIn() {
+  zoomLevel.value = Math.min(3, +(zoomLevel.value + 0.25).toFixed(2));
+}
+
+function handleZoomOut() {
+  zoomLevel.value = Math.max(0.5, +(zoomLevel.value - 0.25).toFixed(2));
+}
+
+function handleZoomReset() {
+  zoomLevel.value = 1;
+}
 
 if (standeeSets.value.length > 0 && standeeSets.value[0].standees.length > 0) {
   selectedStandeeId.value = standeeSets.value[0].standees[0].id;
@@ -68,7 +81,7 @@ function persistChanges() {
 
 const { startDrag, startResize, activeSmartGuides } = useCanvasTransform({
   snapGridMm: 1,
-  canvasScale: () => standeeScale,
+  canvasScale: () => standeeScale.value,
   canvasDimensionsMm: () => ({
     width: activeStandee.value?.widthMm || 32,
     height: activeStandee.value?.heightMm || 48
@@ -161,6 +174,124 @@ function handleAddText() {
   showToast('Added text to standee');
 }
 
+// Add Placeholder Box (Portrait zone, HP counter, nameplate header/footer, badge, etc.)
+function handleAddBox(preset: { shapeType: ShapeType; placeholderType: PlaceholderPreset; label: string; icon?: string }) {
+  snapshotState();
+  const sW = activeStandee.value?.widthMm || 32;
+  const sH = activeStandee.value?.heightMm || 48;
+  let w = sW - 4;
+  let h = 10;
+  let x = 2;
+  let y = 10;
+  let bg = 'rgba(15, 23, 42, 0.85)';
+  let border = '#F59E0B';
+  let bWidth = 1;
+  let bStyle: 'solid' | 'dashed' | 'dotted' | 'none' = 'solid';
+  let radius = 2;
+
+  if (preset.placeholderType === 'header') {
+    h = 8;
+    y = 2;
+    bg = '#0F172A';
+  } else if (preset.placeholderType === 'footer') {
+    h = 7;
+    y = sH - 9;
+    bg = '#0B0F17';
+    border = '#334155';
+  } else if (preset.placeholderType === 'portrait') {
+    h = Math.round(sH * 0.6);
+    y = 10;
+    bg = '#1E293B';
+    bStyle = 'dashed';
+  } else if (preset.placeholderType === 'hp') {
+    w = 12;
+    h = 12;
+    x = sW - 14;
+    y = 2;
+    bg = '#EF4444';
+    border = '#B91C1C';
+    radius = 2;
+  }
+
+  const newEl: CanvasElement = {
+    id: `el_box_${Date.now()}`,
+    name: preset.label,
+    type: 'shape',
+    shapeType: preset.shapeType,
+    placeholderType: preset.placeholderType,
+    placeholderLabel: preset.label,
+    showPlaceholderLabel: true,
+    x,
+    y,
+    width: w,
+    height: h,
+    rotation: 0,
+    zIndex: currentElements.value.length + 1,
+    locked: false,
+    hidden: false,
+    opacity: 1,
+    backgroundColor: bg,
+    borderColor: border,
+    borderWidth: bWidth,
+    borderStyle: bStyle,
+    borderRadius: radius,
+    iconGlyph: preset.icon || '🛡️',
+    isFlipped: false
+  };
+
+  currentElements.value.push(newEl);
+  selectedElementId.value = newEl.id;
+  persistChanges();
+  showToast(`Added ${preset.label} to standee`);
+}
+
+function handleBlankCanvas() {
+  if (!activeStandee.value) return;
+  snapshotState();
+  activeStandee.value.elements = [];
+  activeStandee.value.icon = '';
+  activeStandee.value.role = '';
+  activeStandee.value.name = '';
+  selectedElementId.value = null;
+  persistChanges();
+  showToast('Standee cleared to blank canvas!');
+}
+
+function handleApplyTemplate() {
+  if (!activeStandee.value) return;
+  snapshotState();
+  activeStandee.value.name = 'Vanguard Knight';
+  activeStandee.value.role = 'Defender';
+  activeStandee.value.icon = '🗡️';
+  activeStandee.value.elements = [
+    {
+      id: 'el_portrait_box',
+      name: 'Hero Illustration Box',
+      type: 'shape',
+      shapeType: 'rounded-rect',
+      placeholderType: 'portrait',
+      placeholderLabel: 'Hero Portrait Zone',
+      showPlaceholderLabel: false,
+      x: 3,
+      y: 9,
+      width: (activeStandee.value.widthMm || 32) - 6,
+      height: (activeStandee.value.heightMm || 48) - 18,
+      rotation: 0,
+      zIndex: 1,
+      locked: false,
+      hidden: false,
+      opacity: 0.9,
+      backgroundColor: 'rgba(30, 41, 59, 0.6)',
+      borderColor: '#F59E0B',
+      borderWidth: 1.5,
+      borderStyle: 'dashed',
+      borderRadius: 4
+    }
+  ];
+  persistChanges();
+  showToast('Applied standee template');
+}
+
 function handleAddImageFrame(bgUrl?: string) {
   snapshotState();
   const newEl: CanvasElement = {
@@ -216,10 +347,45 @@ function handleAddIconElement(icon: TabletopIcon) {
 }
 
 function handleInsertInlineIcon(icon: TabletopIcon) {
-  if (activeElement.value && activeElement.value.type === 'text') {
-    snapshotState();
-    activeElement.value.text = (activeElement.value.text || '') + ` ${icon.glyph}`;
+  snapshotState();
+  if (activeElement.value) {
+    if (activeElement.value.type === 'text' || activeElement.value.type === 'shape') {
+      activeElement.value.text = (activeElement.value.text || '') + (activeElement.value.text ? ' ' : '') + icon.glyph;
+      if (activeElement.value.type === 'shape' && !activeElement.value.iconGlyph) {
+        activeElement.value.iconGlyph = icon.glyph;
+      }
+    } else if (activeElement.value.type === 'icon') {
+      activeElement.value.iconGlyph = icon.glyph;
+    }
     persistChanges();
+    showToast(`Inserted ${icon.glyph} into ${activeElement.value.name}`);
+  } else {
+    const newEl: CanvasElement = {
+      id: `el_txt_${Date.now()}`,
+      name: `${icon.name} Text`,
+      type: 'text',
+      x: 10,
+      y: 10,
+      width: 30,
+      height: 10,
+      rotation: 0,
+      zIndex: currentElements.value.length + 1,
+      locked: false,
+      hidden: false,
+      opacity: 1,
+      text: `${icon.glyph} ${icon.name}`,
+      fontFamily: 'Outfit',
+      fontSize: 10,
+      fontWeight: 600,
+      fontStyle: 'normal',
+      textAlign: 'center',
+      color: '#FFFFFF',
+      lineHeight: 1.2
+    };
+    currentElements.value.push(newEl);
+    selectedElementId.value = newEl.id;
+    persistChanges();
+    showToast(`Added text with ${icon.glyph}`);
   }
 }
 
@@ -310,11 +476,18 @@ function handleDeleteElement(id: string) {
       <AlignmentBar
         :has-selection="!!activeElement"
         :is-locked="activeElement?.locked"
+        :zoom="zoomLevel"
         @undo="handleUndo"
         @redo="handleRedo"
         @add-text="handleAddText"
         @add-image-frame="handleAddImageFrame"
+        @add-box="handleAddBox"
+        @blank-canvas="handleBlankCanvas"
+        @apply-template="handleApplyTemplate"
         @open-icons="showIconModal = true"
+        @zoom-in="handleZoomIn"
+        @zoom-out="handleZoomOut"
+        @zoom-reset="handleZoomReset"
         @align="handleAlign"
         @duplicate="handleDuplicateElement"
         @delete="activeElement && handleDeleteElement(activeElement.id)"

@@ -17,7 +17,7 @@ import {
   Copy,
   Sliders
 } from 'lucide-vue-next';
-import type { TokenItem, CanvasElement, TabletopIcon } from '../../types/index.ts';
+import type { TokenItem, CanvasElement, TabletopIcon, ShapeType, PlaceholderPreset } from '../../types/index.ts';
 import TransformBox from '../common/TransformBox.vue';
 import AlignmentBar from '../common/AlignmentBar.vue';
 import ElementInspector from '../common/ElementInspector.vue';
@@ -28,8 +28,21 @@ import { useCanvasTransform } from '../../composables/useCanvasTransform.ts';
 const selectedTokenId = ref<string>('');
 const selectedElementId = ref<string | null>(null);
 const showIconModal = ref(false);
+const zoomLevel = ref<number>(1);
 
-const tokenScale = 4.5;
+const tokenScale = computed(() => 4.5 * zoomLevel.value);
+
+function handleZoomIn() {
+  zoomLevel.value = Math.min(3, +(zoomLevel.value + 0.25).toFixed(2));
+}
+
+function handleZoomOut() {
+  zoomLevel.value = Math.max(0.5, +(zoomLevel.value - 0.25).toFixed(2));
+}
+
+function handleZoomReset() {
+  zoomLevel.value = 1;
+}
 
 if (tokenSets.value.length > 0 && tokenSets.value[0].tokens.length > 0) {
   selectedTokenId.value = tokenSets.value[0].tokens[0].id;
@@ -67,7 +80,7 @@ function persistChanges() {
 
 const { startDrag, startResize, activeSmartGuides } = useCanvasTransform({
   snapGridMm: 1,
-  canvasScale: () => tokenScale,
+  canvasScale: () => tokenScale.value,
   canvasDimensionsMm: () => ({
     width: activeToken.value?.diameterMm || 24,
     height: activeToken.value?.diameterMm || 24
@@ -160,6 +173,110 @@ function handleAddText() {
   showToast('Added text to token');
 }
 
+// Add Placeholder Box (Ring boundary, counter box, badge, HP marker, etc.)
+function handleAddBox(preset: { shapeType: ShapeType; placeholderType: PlaceholderPreset; label: string; icon?: string }) {
+  snapshotState();
+  const d = activeToken.value?.diameterMm || 24;
+  let w = Math.round(d * 0.7);
+  let h = Math.round(d * 0.4);
+  let x = Math.round((d - w) / 2);
+  let y = Math.round((d - h) / 2);
+  let bg = 'rgba(15, 23, 42, 0.8)';
+  let border = '#F59E0B';
+  let bWidth = 1;
+  let bStyle: 'solid' | 'dashed' | 'dotted' | 'none' = 'solid';
+  let radius = 2;
+
+  if (preset.shapeType === 'circle') {
+    w = Math.round(d * 0.6);
+    h = w;
+    x = Math.round((d - w) / 2);
+    y = Math.round((d - h) / 2);
+    radius = 9999;
+  } else if (preset.shapeType === 'hex') {
+    w = Math.round(d * 0.75);
+    h = w;
+    x = Math.round((d - w) / 2);
+    y = Math.round((d - h) / 2);
+  }
+
+  const newEl: CanvasElement = {
+    id: `el_box_${Date.now()}`,
+    name: preset.label,
+    type: 'shape',
+    shapeType: preset.shapeType,
+    placeholderType: preset.placeholderType,
+    placeholderLabel: preset.label,
+    showPlaceholderLabel: true,
+    x,
+    y,
+    width: w,
+    height: h,
+    rotation: 0,
+    zIndex: currentElements.value.length + 1,
+    locked: false,
+    hidden: false,
+    opacity: 1,
+    backgroundColor: bg,
+    borderColor: border,
+    borderWidth: bWidth,
+    borderStyle: bStyle,
+    borderRadius: radius,
+    iconGlyph: preset.icon || '🪙',
+    isFlipped: false
+  };
+
+  currentElements.value.push(newEl);
+  selectedElementId.value = newEl.id;
+  persistChanges();
+  showToast(`Added ${preset.label} to token`);
+}
+
+function handleBlankCanvas() {
+  if (!activeToken.value) return;
+  snapshotState();
+  activeToken.value.elements = [];
+  activeToken.value.icon = '';
+  activeToken.value.text = '';
+  selectedElementId.value = null;
+  persistChanges();
+  showToast('Token cleared to blank canvas!');
+}
+
+function handleApplyTemplate() {
+  if (!activeToken.value) return;
+  snapshotState();
+  activeToken.value.icon = '💰';
+  activeToken.value.text = '1G';
+  activeToken.value.elements = [
+    {
+      id: 'el_ring',
+      name: 'Inner Decorative Ring',
+      type: 'shape',
+      shapeType: 'circle',
+      placeholderType: 'custom',
+      placeholderLabel: 'Inner Border Ring',
+      showPlaceholderLabel: false,
+      x: 2,
+      y: 2,
+      width: (activeToken.value.diameterMm || 24) - 4,
+      height: (activeToken.value.diameterMm || 24) - 4,
+      rotation: 0,
+      zIndex: 1,
+      locked: false,
+      hidden: false,
+      opacity: 0.8,
+      backgroundColor: 'transparent',
+      borderColor: '#FDE68A',
+      borderWidth: 1,
+      borderStyle: 'dashed',
+      borderRadius: 9999
+    }
+  ];
+  persistChanges();
+  showToast('Applied token template');
+}
+
 function handleAddImageFrame(bgUrl?: string) {
   snapshotState();
   const newEl: CanvasElement = {
@@ -215,10 +332,45 @@ function handleAddIconElement(icon: TabletopIcon) {
 }
 
 function handleInsertInlineIcon(icon: TabletopIcon) {
-  if (activeElement.value && activeElement.value.type === 'text') {
-    snapshotState();
-    activeElement.value.text = (activeElement.value.text || '') + ` ${icon.glyph}`;
+  snapshotState();
+  if (activeElement.value) {
+    if (activeElement.value.type === 'text' || activeElement.value.type === 'shape') {
+      activeElement.value.text = (activeElement.value.text || '') + (activeElement.value.text ? ' ' : '') + icon.glyph;
+      if (activeElement.value.type === 'shape' && !activeElement.value.iconGlyph) {
+        activeElement.value.iconGlyph = icon.glyph;
+      }
+    } else if (activeElement.value.type === 'icon') {
+      activeElement.value.iconGlyph = icon.glyph;
+    }
     persistChanges();
+    showToast(`Inserted ${icon.glyph} into ${activeElement.value.name}`);
+  } else {
+    const newEl: CanvasElement = {
+      id: `el_txt_${Date.now()}`,
+      name: `${icon.name} Text`,
+      type: 'text',
+      x: 10,
+      y: 10,
+      width: 25,
+      height: 8,
+      rotation: 0,
+      zIndex: currentElements.value.length + 1,
+      locked: false,
+      hidden: false,
+      opacity: 1,
+      text: `${icon.glyph} ${icon.name}`,
+      fontFamily: 'Outfit',
+      fontSize: 10,
+      fontWeight: 600,
+      fontStyle: 'normal',
+      textAlign: 'center',
+      color: '#FFFFFF',
+      lineHeight: 1.2
+    };
+    currentElements.value.push(newEl);
+    selectedElementId.value = newEl.id;
+    persistChanges();
+    showToast(`Added text with ${icon.glyph}`);
   }
 }
 
@@ -336,11 +488,18 @@ function handleAddToken() {
       <AlignmentBar
         :has-selection="!!activeElement"
         :is-locked="activeElement?.locked"
+        :zoom="zoomLevel"
         @undo="handleUndo"
         @redo="handleRedo"
         @add-text="handleAddText"
         @add-image-frame="handleAddImageFrame"
+        @add-box="handleAddBox"
+        @blank-canvas="handleBlankCanvas"
+        @apply-template="handleApplyTemplate"
         @open-icons="showIconModal = true"
+        @zoom-in="handleZoomIn"
+        @zoom-out="handleZoomOut"
+        @zoom-reset="handleZoomReset"
         @align="handleAlign"
         @duplicate="handleDuplicateElement"
         @delete="activeElement && handleDeleteElement(activeElement.id)"

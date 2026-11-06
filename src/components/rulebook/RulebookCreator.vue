@@ -14,7 +14,13 @@ import {
   Search,
   ListOrdered,
   FileCode,
-  Tag
+  Tag,
+  ZoomIn,
+  ZoomOut,
+  RotateCcw,
+  LayoutTemplate,
+  BoxSelect,
+  Sparkles
 } from 'lucide-vue-next';
 import type { RulebookChapter, GlossaryItem } from '../../types/index.ts';
 
@@ -23,6 +29,81 @@ const selectedChapterId = ref<string>('');
 const newKeywordInput = ref<string>('');
 const newGlossaryTerm = ref<string>('');
 const newGlossaryDef = ref<string>('');
+const zoomLevel = ref<number>(1.0);
+
+function handleZoomIn() {
+  zoomLevel.value = Math.min(2.0, +(zoomLevel.value + 0.15).toFixed(2));
+}
+
+function handleZoomOut() {
+  zoomLevel.value = Math.max(0.6, +(zoomLevel.value - 0.15).toFixed(2));
+}
+
+function handleZoomReset() {
+  zoomLevel.value = 1.0;
+}
+
+function handleInsertPlaceholder(type: 'header' | 'callout' | 'example' | 'diagram' | 'table' | 'footer') {
+  if (!activeChapter.value) return;
+  let snippet = '';
+  switch (type) {
+    case 'header':
+      snippet = `\n\n### ── [SECTION HEADER: Gameplay Phase] ──\n`;
+      break;
+    case 'callout':
+      snippet = `\n\n> ⚠️ **IMPORTANT RULE / CLARIFICATION**\n> When rolling a tie, defender wins priority.\n`;
+      break;
+    case 'example':
+      snippet = `\n\n> 🎲 **EXAMPLE OF PLAY**\n> Player A spends 2 Action Points to move across 2 hexes, then uses 1 Magic Point to trigger Fireball.\n`;
+      break;
+    case 'diagram':
+      snippet = `\n\n┌───────────────────────────────────────────────┐\n│ [DIAGRAM / PORTRAIT / ARTWORK PLACEHOLDER]    │\n│ Recommended size: 60mm × 40mm                │\n└───────────────────────────────────────────────┘\n`;
+      break;
+    case 'table':
+      snippet = `\n\n| Attribute | Base Cost | Effect Description |\n| :--- | :---: | :--- |\n| Health (HP) | 10 | Max damage capacity |\n| Speed (SPD) | 3 | Hexes per movement turn |\n`;
+      break;
+    case 'footer':
+      snippet = `\n\n─────────────────────────────────────────────────\n*[FOOTER: Official Tournament Reference • Rev 1.2]*\n`;
+      break;
+  }
+  activeChapter.value.content += snippet;
+  saveRulebook();
+  showToast(`Inserted ${type} placeholder block`);
+}
+
+function handleBlankChapter() {
+  if (!activeChapter.value) return;
+  activeChapter.value.content = '';
+  saveRulebook();
+  showToast('Cleared chapter to blank state');
+}
+
+function handleApplyTemplate() {
+  if (!activeChapter.value) return;
+  activeChapter.value.title = `Phase ${activeChapter.value.pageNumber}: Core Game Flow`;
+  activeChapter.value.content = `### ── [SECTION HEADER: Setup & Sequence] ──
+Each turn is divided into three distinct steps executed in clockwise turn order.
+
+1. **Draw Phase**: Replenish your hand up to the maximum hand size of 5 cards.
+2. **Action Phase**: You may spend up to 3 Action Points to move, activate abilities, or trade.
+3. **End Phase**: Discard excess tokens and pass the initiative marker.
+
+> ⚠️ **IMPORTANT RULE / CLARIFICATION**
+> Unused Action Points do not carry over to subsequent turns.
+
+┌───────────────────────────────────────────────┐
+│ [DIAGRAM / MAP ZONE REFERENCE PLACEHOLDER]    │
+│ Board Position & Line-of-Sight Diagram        │
+└───────────────────────────────────────────────┘
+
+> 🎲 **EXAMPLE OF PLAY**
+> Ranger moves 2 hexes towards the Mountain tile, revealing an exploration token.
+
+─────────────────────────────────────────────────
+*[FOOTER: TableSmith Standard Rulebook Imposition • Page ${activeChapter.value.pageNumber}]*`;
+  saveRulebook();
+  showToast('Applied rulebook template layout');
+}
 
 if (rulebook.value.chapters.length > 0) {
   selectedChapterId.value = rulebook.value.chapters[0].id;
@@ -209,19 +290,67 @@ function handleRemoveGlossary(index: number) {
           <span class="text-xs text-slate-500 font-mono">Format: {{ rulebook.pageSize }} Booklet</span>
         </div>
 
-        <div class="flex items-center gap-2" v-if="activeTab === 'editor' && activeChapter">
-          <button
-            @click="handleDeleteChapter(activeChapter.id)"
-            class="px-2 py-1 text-xs text-red-400 hover:text-red-300 bg-red-950/40 hover:bg-red-900/60 rounded flex items-center gap-1 transition-colors"
-          >
-            <Trash2 class="w-3.5 h-3.5" />
-            Delete Chapter
-          </button>
+        <div class="flex items-center gap-2">
+          <!-- Zoom Controls -->
+          <div class="flex items-center gap-1 bg-slate-900/90 border border-slate-800 rounded px-1.5 py-0.5">
+            <button
+              @click="handleZoomOut"
+              class="p-1 text-slate-400 hover:text-white hover:bg-slate-800 rounded transition-colors"
+              title="Zoom Out"
+            >
+              <ZoomOut class="w-3.5 h-3.5" />
+            </button>
+            <button
+              @click="handleZoomReset"
+              class="text-[11px] font-mono text-slate-300 hover:text-amber-300 px-1 py-0.5 rounded transition-colors"
+              title="Reset Zoom (100%)"
+            >
+              {{ Math.round(zoomLevel * 100) }}%
+            </button>
+            <button
+              @click="handleZoomIn"
+              class="p-1 text-slate-400 hover:text-white hover:bg-slate-800 rounded transition-colors"
+              title="Zoom In"
+            >
+              <ZoomIn class="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          <template v-if="activeTab === 'editor' && activeChapter">
+            <button
+              @click="handleBlankChapter"
+              class="px-2 py-1 text-xs text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700/80 rounded flex items-center gap-1 transition-colors"
+              title="Start with Blank Chapter"
+            >
+              <BoxSelect class="w-3.5 h-3.5 text-slate-400" />
+              Blank Canvas
+            </button>
+            <button
+              @click="handleApplyTemplate"
+              class="px-2 py-1 text-xs text-amber-300 hover:text-amber-200 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 rounded flex items-center gap-1 transition-colors"
+              title="Apply Standard Rulebook Layout Template"
+            >
+              <LayoutTemplate class="w-3.5 h-3.5" />
+              Template
+            </button>
+            <button
+              @click="handleDeleteChapter(activeChapter.id)"
+              class="px-2 py-1 text-xs text-red-400 hover:text-red-300 bg-red-950/40 hover:bg-red-900/60 rounded flex items-center gap-1 transition-colors"
+            >
+              <Trash2 class="w-3.5 h-3.5" />
+              Delete
+            </button>
+          </template>
         </div>
       </div>
 
       <!-- Document Content Body -->
       <div class="flex-1 overflow-y-auto p-8 flex justify-center">
+        <!-- Scale Container for Zoom -->
+        <div
+          class="w-full flex justify-center transition-transform duration-150 origin-top"
+          :style="{ transform: `scale(${zoomLevel})` }"
+        >
         <!-- 1. Chapter Editor -->
         <div v-if="activeTab === 'editor' && activeChapter" class="w-full max-w-2xl bg-[#0B0F17] border border-slate-800 rounded-xl p-8 shadow-2xl space-y-5">
           <div class="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -238,13 +367,59 @@ function handleRemoveGlossary(index: number) {
             />
           </div>
 
+          <!-- Add Placeholder Layout Blocks -->
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <label class="text-[10px] text-slate-400 font-mono uppercase tracking-wider">Quick Layout & Placeholder Boxes</label>
+              <span class="text-[10px] text-slate-500 font-mono">Click to insert at cursor</span>
+            </div>
+            <div class="flex flex-wrap gap-1.5 p-2 bg-slate-900/70 border border-slate-800/80 rounded-lg">
+              <button
+                @click="handleInsertPlaceholder('header')"
+                class="px-2 py-1 text-[11px] font-mono bg-slate-800 hover:bg-slate-700 text-slate-200 rounded border border-slate-700/60 flex items-center gap-1"
+              >
+                + Header Bar
+              </button>
+              <button
+                @click="handleInsertPlaceholder('callout')"
+                class="px-2 py-1 text-[11px] font-mono bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 rounded border border-amber-500/30 flex items-center gap-1"
+              >
+                + Callout Box
+              </button>
+              <button
+                @click="handleInsertPlaceholder('example')"
+                class="px-2 py-1 text-[11px] font-mono bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 rounded border border-indigo-500/30 flex items-center gap-1"
+              >
+                + Example of Play
+              </button>
+              <button
+                @click="handleInsertPlaceholder('diagram')"
+                class="px-2 py-1 text-[11px] font-mono bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 rounded border border-emerald-500/30 flex items-center gap-1"
+              >
+                + Diagram Frame
+              </button>
+              <button
+                @click="handleInsertPlaceholder('table')"
+                class="px-2 py-1 text-[11px] font-mono bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 rounded border border-cyan-500/30 flex items-center gap-1"
+              >
+                + Stat Table
+              </button>
+              <button
+                @click="handleInsertPlaceholder('footer')"
+                class="px-2 py-1 text-[11px] font-mono bg-slate-800 hover:bg-slate-700 text-slate-300 rounded border border-slate-700/60 flex items-center gap-1"
+              >
+                + Footer Bar
+              </button>
+            </div>
+          </div>
+
           <div>
             <label class="text-[10px] text-slate-500 font-mono">Rules Prose & Markdown</label>
             <textarea
               v-model="activeChapter.content"
               @input="saveRulebook"
               rows="12"
-              class="w-full bg-[#1E293B] border border-slate-700 rounded p-3 text-xs text-slate-200 font-sans leading-relaxed mt-1 resize-none"
+              class="w-full bg-[#1E293B] border border-slate-700 rounded p-3 text-xs text-slate-200 font-sans leading-relaxed mt-1 resize-none font-mono"
             ></textarea>
           </div>
 
@@ -361,6 +536,7 @@ function handleRemoveGlossary(index: number) {
             <h3 class="text-lg font-bold text-white font-display">{{ ch.title }}</h3>
             <p class="text-xs text-slate-300 leading-relaxed whitespace-pre-line">{{ ch.content }}</p>
           </div>
+        </div>
         </div>
       </div>
     </main>

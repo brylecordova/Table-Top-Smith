@@ -9,6 +9,8 @@ export interface GameProject {
 }
 
 export type ElementType = 'text' | 'image-frame' | 'icon' | 'shape';
+export type ShapeType = 'rectangle' | 'circle' | 'rounded-rect' | 'hex' | 'badge';
+export type PlaceholderPreset = 'header' | 'footer' | 'portrait' | 'effect' | 'marker' | 'hp' | 'stats' | 'cost' | 'custom';
 
 export interface CanvasElement {
   id: string;
@@ -44,7 +46,7 @@ export interface CanvasElement {
   imageFit?: 'cover' | 'contain' | 'fill';
   borderWidth?: number;
   borderColor?: string;
-  borderStyle?: 'solid' | 'dashed' | 'none';
+  borderStyle?: 'solid' | 'dashed' | 'dotted' | 'none';
   borderRadius?: number;
   backgroundColor?: string;
 
@@ -52,6 +54,36 @@ export interface CanvasElement {
   iconGlyph?: string;
   iconColor?: string;
   iconScale?: number;
+
+  // Shape & Box Placeholder properties
+  shapeType?: ShapeType;
+  placeholderType?: PlaceholderPreset;
+  placeholderLabel?: string;
+  showPlaceholderLabel?: boolean;
+  textHasBackground?: boolean;
+  textBackgroundColor?: string;
+
+  // Tile Flip Exploration properties (for board maps and flip elements)
+  isFlipped?: boolean;
+  flippedTitle?: string;
+  flippedIcon?: string;
+  flippedDescription?: string;
+  flippedColor?: string;
+  flippedBgImageUrl?: string;
+}
+
+export interface BoxDesignPreset {
+  id: string;
+  name: string;
+  description: string;
+  lidColor: string;
+  sideColor: string;
+  trayColor: string;
+  accentColor: string;
+  fontFamily: string;
+  titleColor: string;
+  subtitleColor: string;
+  elements?: CanvasElement[];
 }
 
 export interface SmartGuide {
@@ -135,7 +167,9 @@ export interface BoxDieline {
   };
   materialThicknessMm: number;
   lidClearanceMm: number;
-  flangeWidthMm: number;
+  group?: string; // 'Main Box' | 'Deck Box' | 'Side Box' | 'Expansion Box' | custom
+  showDefaultLabels?: boolean;
+  stylePresetName?: string;
   panels: {
     lidTop?: { title: string; subtitle: string; bgColor: string; accentColor: string };
     lidSides?: { text: string; color: string };
@@ -195,6 +229,15 @@ export interface BoardZone {
   width: number;
   height: number;
   color: string;
+  shape?: 'rectangle' | 'circle' | 'hex';
+  icon?: string;
+  description?: string;
+  isFlipped?: boolean;
+  flippedTitle?: string;
+  flippedIcon?: string;
+  flippedColor?: string;
+  flippedDescription?: string;
+  flippedBgImageUrl?: string;
 }
 
 export interface BoardItem {
@@ -240,6 +283,6 @@ export interface TabletopIcon {
   id: string;
   name: string;
   glyph: string;
-  category: 'combat' | 'magic' | 'resources' | 'dice' | 'factions' | 'ui';
+  category: 'combat' | 'magic' | 'resources' | 'dice' | 'factions' | 'ui' | 'conditions' | 'exploration' | 'equipment' | 'stats';
   description: string;
 }

@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
-import { MongoClient, Db } from 'mongodb';
+import { MongoClient } from 'mongodb';
+import type { Db } from 'mongodb';
 
 export interface StorageAdapter {
   collection(name: string): CollectionAdapter;
@@ -139,7 +140,7 @@ export async function getDatabase(): Promise<StorageAdapter> {
   if (mongoUri) {
     try {
       console.log('Connecting to MongoDB cluster at:', mongoUri);
-      const client = new MongoClient(mongoUri);
+      const client = new MongoClient(mongoUri, { serverSelectionTimeoutMS: 2000, connectTimeoutMS: 2000 });
       await client.connect();
       const db = client.db(process.env.MONGODB_DB_NAME || 'tablesmith');
       dbInstance = new MongoDbAdapter(db);
