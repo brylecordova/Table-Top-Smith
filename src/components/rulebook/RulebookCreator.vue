@@ -5,23 +5,7 @@ import {
   saveRulebook,
   showToast
 } from '../../stores/projectStore.ts';
-import {
-  BookOpen,
-  Plus,
-  Trash2,
-  FileText,
-  BookmarkCheck,
-  Search,
-  ListOrdered,
-  FileCode,
-  Tag,
-  ZoomIn,
-  ZoomOut,
-  RotateCcw,
-  LayoutTemplate,
-  BoxSelect,
-  Sparkles
-} from 'lucide-vue-next';
+
 import type { RulebookChapter, GlossaryItem } from '../../types/index.ts';
 
 const activeTab = ref<'editor' | 'toc' | 'glossary' | 'index' | 'booklet'>('editor');
@@ -210,10 +194,10 @@ function handleRemoveGlossary(index: number) {
         <span class="text-xs font-semibold text-slate-300 font-display uppercase tracking-wider">Rulebook Chapters</span>
         <button
           @click="handleAddChapter"
-          class="p-1 hover:bg-slate-800 rounded text-amber-400 hover:text-amber-300 transition-colors"
+          class="p-1 hover:bg-slate-800 rounded text-amber-400 hover:text-amber-300 transition-colors flex items-center justify-center cursor-pointer"
           title="Add Chapter"
         >
-          <Plus class="w-3.5 h-3.5" />
+          <i class="ri-add-line text-sm"></i>
         </button>
       </div>
 
@@ -221,43 +205,43 @@ function handleRemoveGlossary(index: number) {
       <div class="p-2 border-b border-slate-800/80 space-y-1">
         <button
           @click="activeTab = 'editor'"
-          class="w-full text-left px-2.5 py-1.5 text-xs rounded flex items-center gap-2 transition-colors"
+          class="w-full text-left px-2.5 py-1.5 text-xs rounded flex items-center gap-2 transition-colors cursor-pointer"
           :class="activeTab === 'editor' ? 'bg-amber-500/15 text-amber-300 font-medium' : 'text-slate-400 hover:text-white hover:bg-slate-800/60'"
         >
-          <FileText class="w-3.5 h-3.5" />
-          Chapter Editor
+          <i class="ri-file-text-line text-sm"></i>
+          Editor
         </button>
         <button
           @click="activeTab = 'toc'"
-          class="w-full text-left px-2.5 py-1.5 text-xs rounded flex items-center gap-2 transition-colors"
+          class="w-full text-left px-2.5 py-1.5 text-xs rounded flex items-center gap-2 transition-colors cursor-pointer"
           :class="activeTab === 'toc' ? 'bg-amber-500/15 text-amber-300 font-medium' : 'text-slate-400 hover:text-white hover:bg-slate-800/60'"
         >
-          <ListOrdered class="w-3.5 h-3.5" />
-          Table of Contents (Auto)
+          <i class="ri-list-ordered-2 text-sm"></i>
+          Contents
         </button>
         <button
           @click="activeTab = 'glossary'"
-          class="w-full text-left px-2.5 py-1.5 text-xs rounded flex items-center gap-2 transition-colors"
+          class="w-full text-left px-2.5 py-1.5 text-xs rounded flex items-center gap-2 transition-colors cursor-pointer"
           :class="activeTab === 'glossary' ? 'bg-amber-500/15 text-amber-300 font-medium' : 'text-slate-400 hover:text-white hover:bg-slate-800/60'"
         >
-          <BookmarkCheck class="w-3.5 h-3.5" />
-          Terminology Reference (Auto)
+          <i class="ri-bookmark-line text-sm"></i>
+          Glossary
         </button>
         <button
           @click="activeTab = 'index'"
-          class="w-full text-left px-2.5 py-1.5 text-xs rounded flex items-center gap-2 transition-colors"
+          class="w-full text-left px-2.5 py-1.5 text-xs rounded flex items-center gap-2 transition-colors cursor-pointer"
           :class="activeTab === 'index' ? 'bg-amber-500/15 text-amber-300 font-medium' : 'text-slate-400 hover:text-white hover:bg-slate-800/60'"
         >
-          <Search class="w-3.5 h-3.5" />
-          Word Location Index (Auto)
+          <i class="ri-search-line text-sm"></i>
+          Index
         </button>
         <button
           @click="activeTab = 'booklet'"
-          class="w-full text-left px-2.5 py-1.5 text-xs rounded flex items-center gap-2 transition-colors"
+          class="w-full text-left px-2.5 py-1.5 text-xs rounded flex items-center gap-2 transition-colors cursor-pointer"
           :class="activeTab === 'booklet' ? 'bg-amber-500/15 text-amber-300 font-medium' : 'text-slate-400 hover:text-white hover:bg-slate-800/60'"
         >
-          <BookOpen class="w-3.5 h-3.5" />
-          Complete Booklet Preview
+          <i class="ri-book-open-line text-sm"></i>
+          Booklet
         </button>
       </div>
 
@@ -295,49 +279,49 @@ function handleRemoveGlossary(index: number) {
           <div class="flex items-center gap-1 bg-slate-900/90 border border-slate-800 rounded px-1.5 py-0.5">
             <button
               @click="handleZoomOut"
-              class="p-1 text-slate-400 hover:text-white hover:bg-slate-800 rounded transition-colors"
+              class="p-1 text-slate-400 hover:text-white hover:bg-slate-800 rounded transition-colors cursor-pointer"
               title="Zoom Out"
             >
-              <ZoomOut class="w-3.5 h-3.5" />
+              <i class="ri-zoom-out-line text-sm"></i>
             </button>
             <button
               @click="handleZoomReset"
-              class="text-[11px] font-mono text-slate-300 hover:text-amber-300 px-1 py-0.5 rounded transition-colors"
+              class="text-[11px] font-mono text-slate-300 hover:text-amber-300 px-1 py-0.5 rounded transition-colors cursor-pointer"
               title="Reset Zoom (100%)"
             >
               {{ Math.round(zoomLevel * 100) }}%
             </button>
             <button
               @click="handleZoomIn"
-              class="p-1 text-slate-400 hover:text-white hover:bg-slate-800 rounded transition-colors"
+              class="p-1 text-slate-400 hover:text-white hover:bg-slate-800 rounded transition-colors cursor-pointer"
               title="Zoom In"
             >
-              <ZoomIn class="w-3.5 h-3.5" />
+              <i class="ri-zoom-in-line text-sm"></i>
             </button>
           </div>
 
           <template v-if="activeTab === 'editor' && activeChapter">
             <button
               @click="handleBlankChapter"
-              class="px-2 py-1 text-xs text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700/80 rounded flex items-center gap-1 transition-colors"
+              class="px-2 py-1 text-xs text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700/80 rounded flex items-center gap-1 transition-colors cursor-pointer"
               title="Start with Blank Chapter"
             >
-              <BoxSelect class="w-3.5 h-3.5 text-slate-400" />
-              Blank Canvas
+              <i class="ri-checkbox-blank-line text-slate-400 text-sm"></i>
+              Blank
             </button>
             <button
               @click="handleApplyTemplate"
-              class="px-2 py-1 text-xs text-amber-300 hover:text-amber-200 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 rounded flex items-center gap-1 transition-colors"
+              class="px-2 py-1 text-xs text-amber-300 hover:text-amber-200 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 rounded flex items-center gap-1 transition-colors cursor-pointer"
               title="Apply Standard Rulebook Layout Template"
             >
-              <LayoutTemplate class="w-3.5 h-3.5" />
+              <i class="ri-layout-grid-line text-sm"></i>
               Template
             </button>
             <button
               @click="handleDeleteChapter(activeChapter.id)"
-              class="px-2 py-1 text-xs text-red-400 hover:text-red-300 bg-red-950/40 hover:bg-red-900/60 rounded flex items-center gap-1 transition-colors"
+              class="px-2 py-1 text-xs text-red-400 hover:text-red-300 bg-red-950/40 hover:bg-red-900/60 rounded flex items-center gap-1 transition-colors cursor-pointer"
             >
-              <Trash2 class="w-3.5 h-3.5" />
+              <i class="ri-delete-bin-line text-sm"></i>
               Delete
             </button>
           </template>
@@ -545,7 +529,7 @@ function handleRemoveGlossary(index: number) {
     <aside class="w-80 border-l border-slate-800 bg-[#0B0F17] overflow-y-auto p-4 shrink-0 space-y-5">
       <div class="flex items-center justify-between border-b border-slate-800 pb-2">
         <h3 class="text-xs font-semibold text-slate-200 font-display uppercase tracking-wider flex items-center gap-1.5">
-          <Tag class="w-3.5 h-3.5 text-amber-400" />
+          <i class="ri-price-tag-3-line text-amber-400 text-sm"></i>
           Rulebook Indexer
         </h3>
       </div>

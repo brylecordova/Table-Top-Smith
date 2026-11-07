@@ -1,20 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import type { CanvasElement } from '../../types/index.ts';
-import {
-  Layers,
-  Lock,
-  Unlock,
-  Eye,
-  EyeOff,
-  Trash2,
-  ChevronUp,
-  ChevronDown,
-  Type,
-  Image as ImageIcon,
-  Sparkles,
-  GripVertical
-} from 'lucide-vue-next';
 
 const props = defineProps<{
   elements: CanvasElement[];
@@ -91,14 +77,14 @@ function handleDragEnd() {
   <div class="space-y-2 select-none text-xs">
     <div class="flex items-center justify-between border-b border-slate-800 pb-2">
       <span class="text-[10px] text-slate-500 font-mono uppercase tracking-wider flex items-center gap-1.5">
-        <Layers class="w-3.5 h-3.5 text-amber-400" />
-        Layer Hierarchy ({{ props.elements.length }})
+        <i class="ri-stack-line text-amber-400 text-sm"></i>
+        Layers ({{ props.elements.length }})
       </span>
-      <span class="text-[9px] text-slate-500 font-mono">Drag to Reorder</span>
+      <span class="text-[9px] text-slate-500 font-mono">Reorder</span>
     </div>
 
     <div v-if="props.elements.length === 0" class="text-center py-4 text-slate-500 text-[11px] font-mono">
-      No custom elements added yet. Use [+ Add Text] or [+ Add Image Frame].
+      No elements. Add Text or Image.
     </div>
 
     <div v-else class="space-y-1 max-h-52 overflow-y-auto p-0.5">
@@ -121,12 +107,14 @@ function handleDragEnd() {
         ]"
       >
         <div class="flex items-center gap-1.5 truncate">
-          <GripVertical class="w-3.5 h-3.5 text-slate-500 cursor-grab active:cursor-grabbing shrink-0" />
-          <component
-            :is="el.type === 'text' ? Type : el.type === 'image-frame' ? ImageIcon : Sparkles"
-            class="w-3.5 h-3.5 shrink-0"
-            :class="props.selectedElementId === el.id ? 'text-amber-400' : 'text-slate-400'"
-          />
+          <i class="ri-draggable text-slate-500 cursor-grab active:cursor-grabbing shrink-0 text-sm"></i>
+          <i
+            :class="[
+              el.type === 'text' ? 'ri-text' : el.type === 'image-frame' ? 'ri-image-2-line' : 'ri-sparkling-line',
+              props.selectedElementId === el.id ? 'text-amber-400' : 'text-slate-400'
+            ]"
+            class="text-sm shrink-0"
+          ></i>
           <span class="font-medium truncate text-[11px]">{{ el.name || el.type }}</span>
         </div>
 
@@ -134,48 +122,46 @@ function handleDragEnd() {
           <!-- Move Up/Down Quick Buttons -->
           <button
             @click="emit('move-up', el)"
-            class="p-0.5 hover:text-white text-slate-500"
-            title="Bring Forward"
+            class="p-0.5 hover:text-white text-slate-500 cursor-pointer"
+            title="Forward"
           >
-            <ChevronUp class="w-3 h-3" />
+            <i class="ri-arrow-up-s-line text-sm"></i>
           </button>
           <button
             @click="emit('move-down', el)"
-            class="p-0.5 hover:text-white text-slate-500"
-            title="Send Backward"
+            class="p-0.5 hover:text-white text-slate-500 cursor-pointer"
+            title="Backward"
           >
-            <ChevronDown class="w-3 h-3" />
+            <i class="ri-arrow-down-s-line text-sm"></i>
           </button>
 
           <!-- Lock -->
           <button
             @click="el.locked = !el.locked; emit('change')"
-            class="p-0.5"
+            class="p-0.5 cursor-pointer"
             :class="el.locked ? 'text-amber-400' : 'text-slate-500 hover:text-slate-300'"
             title="Lock Layer"
           >
-            <Lock v-if="el.locked" class="w-3 h-3" />
-            <Unlock v-else class="w-3 h-3" />
+            <i :class="el.locked ? 'ri-lock-line' : 'ri-lock-unlock-line'" class="text-sm"></i>
           </button>
 
           <!-- Hide -->
           <button
             @click="el.hidden = !el.hidden; emit('change')"
-            class="p-0.5"
+            class="p-0.5 cursor-pointer"
             :class="el.hidden ? 'text-red-400' : 'text-slate-500 hover:text-slate-300'"
             title="Hide Layer"
           >
-            <EyeOff v-if="el.hidden" class="w-3 h-3" />
-            <Eye v-else class="w-3 h-3" />
+            <i :class="el.hidden ? 'ri-eye-off-line' : 'ri-eye-line'" class="text-sm"></i>
           </button>
 
           <!-- Delete -->
           <button
             @click="emit('delete', el.id)"
-            class="p-0.5 text-slate-500 hover:text-red-400"
+            class="p-0.5 text-slate-500 hover:text-red-400 cursor-pointer"
             title="Delete Layer"
           >
-            <Trash2 class="w-3 h-3" />
+            <i class="ri-delete-bin-line text-sm"></i>
           </button>
         </div>
       </div>

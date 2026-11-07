@@ -8,20 +8,6 @@ import {
   showToast
 } from '../../stores/projectStore.ts';
 import type { AssetItem } from '../../types/index.ts';
-import {
-  FolderOpen,
-  Upload,
-  Plus,
-  Trash2,
-  Tag,
-  Search,
-  ChevronLeft,
-  ChevronRight,
-  Image as ImageIcon,
-  Sparkles,
-  Link,
-  Check
-} from 'lucide-vue-next';
 
 const selectedCategory = ref<'all' | 'character' | 'texture' | 'item' | 'icon' | 'frame'>('all');
 const searchQuery = ref('');
@@ -129,16 +115,15 @@ function handleDragStart(e: DragEvent, asset: AssetItem) {
     <!-- Top Toggle Bar -->
     <div class="h-9 px-2 border-b border-slate-800 flex items-center justify-between text-xs">
       <div v-if="isAssetSidebarOpen" class="flex items-center gap-1.5 font-semibold text-slate-200 font-display">
-        <FolderOpen class="w-3.5 h-3.5 text-amber-400" />
+        <i class="ri-folder-open-line text-amber-400 text-sm"></i>
         <span>Asset Manager</span>
       </div>
       <button
         @click="isAssetSidebarOpen = !isAssetSidebarOpen"
-        class="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white ml-auto"
+        class="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white ml-auto cursor-pointer"
         :title="isAssetSidebarOpen ? 'Collapse Asset Manager' : 'Expand Asset Manager'"
       >
-        <ChevronLeft v-if="isAssetSidebarOpen" class="w-3.5 h-3.5" />
-        <ChevronRight v-else class="w-3.5 h-3.5" />
+        <i :class="isAssetSidebarOpen ? 'ri-arrow-left-s-line' : 'ri-arrow-right-s-line'" class="text-sm"></i>
       </button>
     </div>
 
@@ -149,7 +134,7 @@ function handleDragStart(e: DragEvent, asset: AssetItem) {
       class="flex-1 flex flex-col items-center py-4 gap-3 cursor-pointer hover:bg-slate-900/50"
       title="Click to open Asset Manager"
     >
-      <FolderOpen class="w-4 h-4 text-amber-400" />
+      <i class="ri-folder-open-line text-amber-400 text-base"></i>
       <span class="text-[10px] text-slate-500 font-mono rotate-90 whitespace-nowrap mt-4">
         ASSETS ({{ assets.length }})
       </span>
@@ -162,17 +147,17 @@ function handleDragStart(e: DragEvent, asset: AssetItem) {
         <div class="flex items-center gap-1.5">
           <button
             @click="triggerFileUpload"
-            class="flex-1 py-1.5 px-2 rounded bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold font-display text-[11px] flex items-center justify-center gap-1.5 shadow-xs transition-colors"
+            class="flex-1 py-1.5 px-2 rounded bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold font-display text-[11px] flex items-center justify-center gap-1.5 shadow-xs transition-colors cursor-pointer"
           >
-            <Upload class="w-3.5 h-3.5" />
-            Upload File
+            <i class="ri-upload-2-line text-sm"></i>
+            Upload
           </button>
           <button
             @click="isUploading = !isUploading"
-            class="p-1.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700"
+            class="p-1.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 cursor-pointer"
             title="Add via Image URL"
           >
-            <Link class="w-3.5 h-3.5" />
+            <i class="ri-link text-sm"></i>
           </button>
         </div>
 
@@ -228,15 +213,15 @@ function handleDragStart(e: DragEvent, asset: AssetItem) {
           <div class="flex items-center justify-end gap-1.5 pt-1">
             <button
               @click="isUploading = false"
-              class="px-2 py-0.5 rounded text-slate-400 hover:text-white text-[10px]"
+              class="px-2 py-0.5 rounded text-slate-400 hover:text-white text-[10px] cursor-pointer"
             >
               Cancel
             </button>
             <button
               @click="handleAddUrlAsset"
-              class="px-3 py-1 rounded bg-amber-400 text-slate-950 font-bold text-[10px]"
+              class="px-3 py-1 rounded bg-amber-400 text-slate-950 font-bold text-[10px] cursor-pointer"
             >
-              Save Asset
+              Save
             </button>
           </div>
         </div>
@@ -245,7 +230,7 @@ function handleDragStart(e: DragEvent, asset: AssetItem) {
       <!-- Search & Category Filters -->
       <div class="p-2 border-b border-slate-800 space-y-1.5">
         <div class="relative">
-          <Search class="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500" />
+          <i class="ri-search-line text-xs absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500"></i>
           <input
             v-model="searchQuery"
             placeholder="Search assets & tags..."
@@ -258,7 +243,7 @@ function handleDragStart(e: DragEvent, asset: AssetItem) {
             v-for="cat in categories"
             :key="cat.id"
             @click="selectedCategory = cat.id as any"
-            class="px-2 py-0.5 rounded transition-colors whitespace-nowrap shrink-0"
+            class="px-2 py-0.5 rounded transition-colors whitespace-nowrap shrink-0 cursor-pointer"
             :class="selectedCategory === cat.id
               ? 'bg-amber-400 text-slate-950 font-semibold'
               : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white'"
@@ -271,7 +256,7 @@ function handleDragStart(e: DragEvent, asset: AssetItem) {
       <!-- Asset Items Grid -->
       <div class="flex-1 overflow-y-auto p-2 space-y-2">
         <div v-if="filteredAssets.length === 0" class="text-center py-6 text-slate-500 text-xs font-mono">
-          No assets found. Click [+ Upload File] to add images or character art.
+          No assets found. Click [+ Upload] to add images or character art.
         </div>
 
         <div
@@ -299,10 +284,10 @@ function handleDragStart(e: DragEvent, asset: AssetItem) {
             <span class="text-[11px] font-semibold text-slate-200 truncate font-display">{{ ast.name }}</span>
             <button
               @click.stop="removeAsset(ast.id)"
-              class="text-slate-500 hover:text-red-400 p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+              class="text-slate-500 hover:text-red-400 p-0.5 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
               title="Delete Asset"
             >
-              <Trash2 class="w-3 h-3" />
+              <i class="ri-delete-bin-line text-xs"></i>
             </button>
           </div>
 
@@ -320,10 +305,10 @@ function handleDragStart(e: DragEvent, asset: AssetItem) {
           <!-- One-Click Insert Button -->
           <button
             @click="emit('insert-asset', ast)"
-            class="w-full py-1 text-[10px] font-semibold rounded bg-slate-800 hover:bg-amber-500/20 hover:text-amber-300 text-slate-300 transition-colors flex items-center justify-center gap-1 border border-slate-700/60"
+            class="w-full py-1 text-[10px] font-semibold rounded bg-slate-800 hover:bg-amber-500/20 hover:text-amber-300 text-slate-300 transition-colors flex items-center justify-center gap-1 border border-slate-700/60 cursor-pointer"
           >
-            <Plus class="w-3 h-3" />
-            Insert to Canvas
+            <i class="ri-add-line text-xs"></i>
+            Insert
           </button>
         </div>
       </div>

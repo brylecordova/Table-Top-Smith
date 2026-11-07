@@ -12,27 +12,7 @@ import {
   performUndo,
   performRedo
 } from '../../stores/historyStore.ts';
-import {
-  Box,
-  Scissors,
-  Sliders,
-  FolderPlus,
-  Edit2,
-  Check,
-  X,
-  Sparkles,
-  Palette,
-  Layers,
-  Eye,
-  EyeOff,
-  Trash2,
-  Copy,
-  Plus,
-  ChevronRight,
-  ChevronDown,
-  Settings2,
-  Paintbrush
-} from 'lucide-vue-next';
+
 import type { BoxDieline, BoxTemplateType, CanvasElement, TabletopIcon, ShapeType, PlaceholderPreset, BoxDesignPreset } from '../../types/index.ts';
 import TransformBox from '../common/TransformBox.vue';
 import AlignmentBar from '../common/AlignmentBar.vue';
@@ -412,6 +392,47 @@ function handleClearDefaultContent() {
   showToast('Cleared all default box labels and text');
 }
 
+function handleAddIconElement(icon: TabletopIcon) {
+  snapshotState();
+  const newEl: CanvasElement = {
+    id: `el_ico_${Date.now()}`,
+    name: `${icon.name} Icon`,
+    type: 'icon',
+    x: 20,
+    y: 20,
+    width: 20,
+    height: 20,
+    rotation: 0,
+    zIndex: currentElements.value.length + 1,
+    locked: false,
+    hidden: false,
+    opacity: 1,
+    iconGlyph: icon.glyph,
+    iconCssClass: icon.cssClass,
+    iconColor: '#F59E0B'
+  };
+  currentElements.value.push(newEl);
+  selectedElementId.value = newEl.id;
+  persistChanges();
+  showToast(`Added ${icon.name} to box canvas`);
+}
+
+function handleInsertInlineIcon(icon: TabletopIcon) {
+  if (activeElement.value && (activeElement.value.type === 'text' || activeElement.value.type === 'shape')) {
+    snapshotState();
+    const token = icon.glyph || '⚔️';
+    activeElement.value.text = (activeElement.value.text ? `${activeElement.value.text} ` : '') + token;
+    persistChanges();
+    showToast(`Inserted ${icon.name} into text`);
+  } else {
+    handleAddIconElement(icon);
+  }
+}
+
+function handleSetPortraitIcon(icon: TabletopIcon) {
+  handleAddIconElement(icon);
+}
+
 function handleApplyTemplate() {
   if (!activeBox.value) return;
   snapshotState();
@@ -436,10 +457,10 @@ function handleApplyTemplate() {
           <span class="text-xs font-semibold text-slate-300 font-display uppercase tracking-wider">Packaging Boxes</span>
           <button
             @click="handleCreateBox"
-            class="p-1 hover:bg-slate-800 rounded text-amber-400 hover:text-amber-300 transition-colors"
+            class="p-1 hover:bg-slate-800 rounded text-amber-400 hover:text-amber-300 transition-colors flex items-center justify-center cursor-pointer"
             title="Create Box"
           >
-            <FolderPlus class="w-3.5 h-3.5" />
+            <i class="ri-folder-add-line text-sm"></i>
           </button>
         </div>
         <select

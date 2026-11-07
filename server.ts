@@ -63,7 +63,7 @@ async function ensureSampleData() {
           stats: 'ATK +4 · Rng 1',
           rulesText: 'On critical hit, inflicts Burn for 2 turns. Target discards 1 armor counter.',
           flavorText: 'Forged in the heart of the obsidian volcano before the fall.',
-          artIcon: '⚔️',
+          artIcon: 'ri-sword-line',
           quantity: 3
         },
         {
@@ -74,7 +74,7 @@ async function ensureSampleData() {
           stats: 'DEF +5 · Wgt 2',
           rulesText: 'Absorbs up to 3 damage per round from adjacent ally attacks.',
           flavorText: 'Carved from monolithic granite that weathered the dragon siege.',
-          artIcon: '🛡️',
+          artIcon: 'ri-shield-line',
           quantity: 2
         },
         {
@@ -85,7 +85,7 @@ async function ensureSampleData() {
           stats: 'MOV +3 · Inst',
           rulesText: 'Gain 2 free maneuvers this round. Ignores terrain hazards.',
           flavorText: 'Bottled zephyrs harvested from the Whispering Crags.',
-          artIcon: '🧪',
+          artIcon: 'ri-flask-line',
           quantity: 4
         }
       ]
@@ -668,6 +668,18 @@ app.post('/api/projects/:id/rulebook/index', (req: Request, res: Response) => {
   } catch (err) {
     res.status(500).json({ error: String(err) });
   }
+});
+
+// Route-level fallback: Express error middleware to handle database queries failing gracefully when MongoDB is offline
+app.use((err: any, req: Request, res: Response, next: any) => {
+  if (err?.name === 'MongooseError' || err?.name === 'MongoNetworkError' || err?.name === 'MongoServerSelectionError' || err?.message?.includes('buffering timed out')) {
+    console.warn('[AI Studio] Database offline — returning mock empty response');
+    if (req.method === 'GET') {
+      return res.json(req.path.endsWith('s') || req.path.endsWith('s/') ? [] : {});
+    }
+    return res.status(503).json({ error: 'Service temporarily unavailable (database offline)' });
+  }
+  next(err);
 });
 
 // Start dev or production server

@@ -10,14 +10,9 @@ import {
   performUndo,
   performRedo
 } from '../../stores/historyStore.ts';
-import {
-  Coins,
-  Plus,
-  Trash2,
-  Copy,
-  Sliders
-} from 'lucide-vue-next';
+
 import type { TokenItem, CanvasElement, TabletopIcon, ShapeType, PlaceholderPreset } from '../../types/index.ts';
+import { getRemixIconClass } from '../../utils/iconHelper.ts';
 import TransformBox from '../common/TransformBox.vue';
 import AlignmentBar from '../common/AlignmentBar.vue';
 import ElementInspector from '../common/ElementInspector.vue';
@@ -323,6 +318,7 @@ function handleAddIconElement(icon: TabletopIcon) {
     hidden: false,
     opacity: 1,
     iconGlyph: icon.glyph,
+    iconCssClass: icon.cssClass,
     iconColor: '#F59E0B'
   };
   currentElements.value.push(newEl);
@@ -377,8 +373,9 @@ function handleInsertInlineIcon(icon: TabletopIcon) {
 function handleSetPortraitIcon(icon: TabletopIcon) {
   if (activeToken.value) {
     snapshotState();
-    activeToken.value.icon = icon.glyph;
+    activeToken.value.icon = icon.cssClass || icon.glyph;
     persistChanges();
+    showToast(`Set token icon to ${icon.name}`);
   }
 }
 
@@ -453,10 +450,10 @@ function handleAddToken() {
         <span class="text-xs font-semibold text-slate-300 font-display uppercase tracking-wider">Punchboard Tokens</span>
         <button
           @click="handleAddToken"
-          class="p-1 hover:bg-slate-800 rounded text-amber-400 hover:text-amber-300 transition-colors"
+          class="p-1 hover:bg-slate-800 rounded text-amber-400 hover:text-amber-300 transition-colors flex items-center justify-center cursor-pointer"
           title="Add Token"
         >
-          <Plus class="w-3.5 h-3.5" />
+          <i class="ri-add-line text-sm"></i>
         </button>
       </div>
 
@@ -471,7 +468,7 @@ function handleAddToken() {
             : 'hover:bg-slate-800/60 text-slate-300 border border-transparent'"
         >
           <div class="flex items-center gap-2 truncate">
-            <span class="text-base shrink-0">{{ tok.icon || '🪙' }}</span>
+            <i :class="[getRemixIconClass(tok.icon, 'ri-copper-coin-line'), 'text-base text-amber-400 shrink-0']"></i>
             <div class="truncate">
               <div class="font-medium truncate">{{ tok.name }}</div>
               <div class="text-[10px] text-slate-500 font-mono">{{ tok.shape }} · Ø {{ tok.diameterMm }}mm</div>
@@ -546,7 +543,7 @@ function handleAddToken() {
 
               <!-- Default Background Icon if no custom elements -->
               <div v-if="currentElements.length === 0" class="pointer-events-none text-center">
-                <div class="text-4xl filter drop-shadow">{{ activeToken.icon }}</div>
+                <i :class="[getRemixIconClass(activeToken.icon, 'ri-copper-coin-line'), 'text-4xl text-amber-400 filter drop-shadow']"></i>
                 <div class="text-xs font-bold text-white font-mono mt-1 px-2 py-0.5 rounded bg-black/40">
                   {{ activeToken.text }}
                 </div>

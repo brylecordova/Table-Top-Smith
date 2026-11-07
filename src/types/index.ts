@@ -52,6 +52,7 @@ export interface CanvasElement {
 
   // Icon properties
   iconGlyph?: string;
+  iconCssClass?: string;
   iconColor?: string;
   iconScale?: number;
 
@@ -283,6 +284,7 @@ export interface TabletopIcon {
   id: string;
   name: string;
   glyph: string;
-  category: 'combat' | 'magic' | 'resources' | 'dice' | 'factions' | 'ui' | 'conditions' | 'exploration' | 'equipment' | 'stats';
+  category: 'combat' | 'magic' | 'resources' | 'dice' | 'factions' | 'ui' | 'conditions' | 'exploration' | 'equipment' | 'stats' | string;
   description: string;
+  cssClass?: string;
 }

@@ -9,17 +9,7 @@ import {
   boards,
   showToast
 } from '../../stores/projectStore.ts';
-import {
-  Printer,
-  Download,
-  Sliders,
-  Eye,
-  Layers,
-  Sparkles,
-  FileCheck,
-  Check,
-  RotateCw
-} from 'lucide-vue-next';
+
 import jsPDF from 'jspdf';
 
 const targetPaper = ref<'A4' | 'LETTER' | 'A3'>('A4');
@@ -364,17 +354,17 @@ async function handleExportTts() {
         <div class="flex items-center gap-2">
           <button
             @click="handleExportTts"
-            class="px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded flex items-center gap-1.5 transition-colors"
+            class="px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded flex items-center gap-1.5 transition-colors cursor-pointer"
           >
-            <Download class="w-3.5 h-3.5 text-amber-400" />
-            TTS Saved Object
+            <i class="ri-download-2-line text-amber-400 text-sm"></i>
+            TTS Object
           </button>
           <button
             @click="handleExportPdf"
-            class="px-3.5 py-1.5 text-xs font-semibold text-slate-950 bg-amber-400 hover:bg-amber-300 rounded font-display flex items-center gap-1.5 shadow-sm"
+            class="px-3.5 py-1.5 text-xs font-semibold text-slate-950 bg-amber-400 hover:bg-amber-300 rounded font-display flex items-center gap-1.5 shadow-sm cursor-pointer"
           >
-            <Printer class="w-3.5 h-3.5" />
-            Download Print-Ready PDF
+            <i class="ri-printer-line text-sm"></i>
+            Export PDF
           </button>
         </div>
       </div>
@@ -573,17 +563,17 @@ async function handleExportTts() {
       <div class="border-t border-slate-800 pt-3 space-y-2">
         <button
           @click="handleExportPdf"
-          class="w-full py-2 text-xs font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 rounded font-display flex items-center justify-center gap-2 shadow-sm"
+          class="w-full py-2 text-xs font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 rounded font-display flex items-center justify-center gap-2 shadow-sm cursor-pointer"
         >
-          <Printer class="w-4 h-4" />
-          Download Production PDF
+          <i class="ri-printer-line text-base"></i>
+          Export PDF
         </button>
         <button
           @click="handleExportTts"
-          class="w-full py-2 text-xs font-semibold text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded flex items-center justify-center gap-2"
+          class="w-full py-2 text-xs font-semibold text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded flex items-center justify-center gap-2 cursor-pointer"
         >
-          <Download class="w-4 h-4 text-amber-400" />
-          Export TTS JSON Deck
+          <i class="ri-download-2-line text-amber-400 text-base"></i>
+          Export TTS
         </button>
       </div>
     </aside>

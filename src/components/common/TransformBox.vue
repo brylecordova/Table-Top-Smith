@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, nextTick } from 'vue';
 import type { CanvasElement } from '../../types/index.ts';
 import type { HandleType } from '../../composables/useCanvasTransform.ts';
+import { getRemixIconClass } from '../../utils/iconHelper.ts';
 
 const props = defineProps<{
   element: CanvasElement;
@@ -13,7 +14,65 @@ const emit = defineEmits<{
   (e: 'select', el: CanvasElement): void;
   (e: 'start-drag', event: MouseEvent, el: CanvasElement): void;
   (e: 'start-resize', event: MouseEvent, el: CanvasElement, handle: HandleType): void;
+  (e: 'change', el: CanvasElement): void;
 }>();
+
+const isEditing = ref(false);
+const editField = ref<'text' | 'placeholderLabel'>('text');
+const editValue = ref('');
+const textInputRef = ref<HTMLInputElement | HTMLTextAreaElement | null>(null);
+
+function startEditing(field: 'text' | 'placeholderLabel' = 'text', e?: MouseEvent) {
+  if (e) e.stopPropagation();
+  if (props.element.locked) return;
+  editField.value = field;
+  editValue.value = field === 'placeholderLabel'
+    ? (props.element.placeholderLabel || props.element.name || '')
+    : (props.element.text || '');
+  isEditing.value = true;
+  nextTick(() => {
+    if (textInputRef.value) {
+      textInputRef.value.focus();
+      textInputRef.value.select();
+    }
+  });
+}
+
+function finishEditing() {
+  if (!isEditing.value) return;
+  if (editField.value === 'placeholderLabel') {
+    props.element.placeholderLabel = editValue.value;
+  } else {
+    props.element.text = editValue.value;
+  }
+  isEditing.value = false;
+  emit('change', props.element);
+}
+
+function handleEnter(e: KeyboardEvent) {
+  if (editField.value === 'text' && e.shiftKey) {
+    return; // allow newline on Shift+Enter
+  }
+  e.preventDefault();
+  finishEditing();
+}
+
+function cancelEditing() {
+  isEditing.value = false;
+}
+
+function handleContainerDblClick(e: MouseEvent) {
+  e.stopPropagation();
+  if (props.element.type === 'text') {
+    startEditing('text', e);
+  } else if (props.element.type === 'shape') {
+    if (props.element.text) {
+      startEditing('text', e);
+    } else {
+      startEditing('placeholderLabel', e);
+    }
+  }
+}
 
 const transformStyle = computed(() => {
   const el = props.element;
@@ -49,6 +108,7 @@ function handleResize(e: MouseEvent, handle: HandleType) {
     class="absolute select-none cursor-move group"
     :style="transformStyle"
     @mousedown="handleMouseDown"
+    @dblclick="handleContainerDblClick"
   >
     <!-- Element Content Viewport -->
     <div
@@ -80,7 +140,7 @@ function handleResize(e: MouseEvent, handle: HandleType) {
         />
       </svg>
 
-      <!-- 1. Text Box Content (Supports inline emojis, game symbols & custom text container fill) -->
+      <!-- 1. Text Box Content (Supports double-click inline editing) -->
       <div
         v-if="props.element.type === 'text'"
         class="w-full h-full flex flex-col p-1 leading-normal overflow-hidden break-words whitespace-pre-wrap transition-colors z-10"
@@ -99,8 +159,28 @@ function handleResize(e: MouseEvent, handle: HandleType) {
             ? props.element.textBackgroundColor
             : 'transparent'
         }"
+        @dblclick.stop="startEditing('text', $event)"
       >
-        {{ props.element.text || 'Add your text here...' }}
+        <textarea
+          v-if="isEditing && editField === 'text'"
+          ref="textInputRef"
+          v-model="editValue"
+          class="w-full h-full bg-slate-950/95 text-white border-2 border-amber-400 rounded p-1 outline-none resize-none shadow-xl ring-2 ring-amber-400/40 select-text cursor-text"
+          :style="{
+            fontFamily: props.element.fontFamily ? `${props.element.fontFamily}, sans-serif` : 'inherit',
+            fontSize: `${(props.element.fontSize || 12) * (props.scale / 3.8)}px`,
+            textAlign: props.element.textAlign || 'left',
+            color: props.element.color || '#FFFFFF',
+            fontWeight: props.element.fontWeight || 400
+          }"
+          @blur="finishEditing"
+          @keydown="e => { if (e.key === 'Enter' && !e.shiftKey) { handleEnter(e); } else if (e.key === 'Escape') { cancelEditing(); } }"
+          @mousedown.stop
+          @click.stop
+        ></textarea>
+        <template v-else>
+          {{ props.element.text || 'Double-click to edit text...' }}
+        </template>
       </div>
 
       <!-- 2. Section Image Frame with Dual-Layer Compositing -->
@@ -141,7 +221,9 @@ function handleResize(e: MouseEvent, handle: HandleType) {
           color: props.element.iconColor || '#F59E0B'
         }"
       >
-        {{ props.element.iconGlyph || '⚔️' }}
+        <i v-if="props.element.iconCssClass" :class="props.element.iconCssClass" class="leading-none"></i>
+        <i v-else-if="getRemixIconClass(props.element.iconGlyph)" :class="getRemixIconClass(props.element.iconGlyph)" class="leading-none text-amber-400"></i>
+        <span v-else>{{ props.element.iconGlyph || '⚔️' }}</span>
       </div>
 
       <!-- 4. Shape & Placeholder Box Element -->
@@ -172,7 +254,8 @@ function handleResize(e: MouseEvent, handle: HandleType) {
             class="w-full h-full flex flex-col items-center justify-center p-2 relative z-10 animate-fade-in"
             :style="{ backgroundColor: props.element.flippedColor || 'rgba(245, 158, 11, 0.15)' }"
           >
-            <span class="text-2xl mb-1 filter drop-shadow">{{ props.element.flippedIcon || '✨' }}</span>
+            <i v-if="props.element.flippedIcon && getRemixIconClass(props.element.flippedIcon)" :class="[getRemixIconClass(props.element.flippedIcon), 'text-2xl mb-1 filter drop-shadow']"></i>
+            <span v-else class="text-2xl mb-1 filter drop-shadow">{{ props.element.flippedIcon || '✨' }}</span>
             <span
               class="font-bold uppercase tracking-wider font-display truncate max-w-full"
               :style="{
@@ -197,22 +280,38 @@ function handleResize(e: MouseEvent, handle: HandleType) {
         <!-- NORMAL / UNEXPLORED / PLACEHOLDER FACE -->
         <template v-else>
           <!-- Hex Exploration Tile Default State -->
-          <div v-if="props.element.shapeType === 'hex'" class="flex flex-col items-center justify-center p-1.5 z-10 w-full h-full">
-            <span class="text-2xl filter drop-shadow">{{ props.element.iconGlyph || '🌫️' }}</span>
+          <div v-if="props.element.shapeType === 'hex'" class="flex flex-col items-center justify-center p-1.5 z-10 w-full h-full" @dblclick.stop="startEditing('placeholderLabel', $event)">
+            <i v-if="props.element.iconCssClass" :class="[props.element.iconCssClass, 'text-2xl filter drop-shadow']"></i>
+            <i v-else-if="getRemixIconClass(props.element.iconGlyph)" :class="[getRemixIconClass(props.element.iconGlyph), 'text-2xl filter drop-shadow']"></i>
+            <span v-else class="text-2xl filter drop-shadow">{{ props.element.iconGlyph || '🌫️' }}</span>
+            <input
+              v-if="isEditing && editField === 'placeholderLabel'"
+              ref="textInputRef"
+              v-model="editValue"
+              class="w-full bg-slate-950/95 border-2 border-amber-400 rounded px-1.5 py-0.5 text-center outline-none text-white font-display text-xs shadow-lg ring-2 ring-amber-400/40 select-text cursor-text"
+              @blur="finishEditing"
+              @keydown="e => { if (e.key === 'Enter') { handleEnter(e); } else if (e.key === 'Escape') { cancelEditing(); } }"
+              @mousedown.stop
+              @click.stop
+            />
             <span
-              class="font-display font-semibold uppercase tracking-wider truncate max-w-full text-white mt-0.5"
+              v-else
+              class="font-display font-semibold uppercase tracking-wider truncate max-w-full text-white mt-0.5 cursor-pointer hover:text-amber-300"
               :style="{
                 fontSize: `${Math.max(8, (props.element.fontSize || Math.min(props.element.width, props.element.height) * 0.12) * props.scale)}px`,
                 fontFamily: props.element.fontFamily ? `${props.element.fontFamily}, 'Apple Color Emoji', sans-serif` : 'Outfit',
                 color: props.element.color || '#FFFFFF'
               }"
+              title="Double-click to edit label"
             >
               {{ props.element.placeholderLabel || props.element.name || 'Hex Tile' }}
             </span>
             <span
               v-if="props.element.text"
-              class="text-[9px] text-slate-300 font-sans mt-0.5 truncate max-w-full"
+              class="text-[9px] text-slate-300 font-sans mt-0.5 truncate max-w-full cursor-pointer hover:text-white"
               :style="{ color: props.element.color || '#E2E8F0' }"
+              @dblclick.stop="startEditing('text', $event)"
+              title="Double-click to edit subtext"
             >
               {{ props.element.text }}
             </span>
@@ -228,7 +327,9 @@ function handleResize(e: MouseEvent, handle: HandleType) {
             }"
           >
             <!-- Icon if present -->
-            <span v-if="props.element.iconGlyph" class="text-xl mb-0.5 filter drop-shadow">
+            <i v-if="props.element.iconCssClass" :class="[props.element.iconCssClass, 'text-xl mb-0.5 filter drop-shadow']"></i>
+            <i v-else-if="getRemixIconClass(props.element.iconGlyph)" :class="[getRemixIconClass(props.element.iconGlyph), 'text-xl mb-0.5 filter drop-shadow']"></i>
+            <span v-else-if="props.element.iconGlyph" class="text-xl mb-0.5 filter drop-shadow">
               {{ props.element.iconGlyph }}
             </span>
 
@@ -252,26 +353,55 @@ function handleResize(e: MouseEvent, handle: HandleType) {
                   ? 'transparent'
                   : undefined
               }"
+              @dblclick.stop="startEditing('placeholderLabel', $event)"
+              title="Double-click to edit label"
             >
-              <span
-                v-if="props.element.textHasBackground !== false && props.element.textBackgroundColor !== 'transparent'"
-                class="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0"
-              ></span>
-              <span class="truncate">{{ props.element.placeholderLabel || props.element.name || 'Placeholder Box' }}</span>
+              <input
+                v-if="isEditing && editField === 'placeholderLabel'"
+                ref="textInputRef"
+                v-model="editValue"
+                class="w-full bg-slate-950/95 border-2 border-amber-400 rounded px-1 text-center outline-none text-white text-[10px] shadow-lg ring-2 ring-amber-400/40 select-text cursor-text"
+                @blur="finishEditing"
+                @keydown="e => { if (e.key === 'Enter') { handleEnter(e); } else if (e.key === 'Escape') { cancelEditing(); } }"
+                @mousedown.stop
+                @click.stop
+              />
+              <template v-else>
+                <span
+                  v-if="props.element.textHasBackground !== false && props.element.textBackgroundColor !== 'transparent'"
+                  class="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0"
+                ></span>
+                <span class="truncate">{{ props.element.placeholderLabel || props.element.name || 'Placeholder Box' }}</span>
+              </template>
             </div>
 
             <!-- Optional Subtext / Rule snippet -->
             <div
-              v-if="props.element.text"
-              class="mt-1 line-clamp-2 px-1 break-words whitespace-pre-wrap"
+              v-if="props.element.text || (isEditing && editField === 'text')"
+              class="mt-1 line-clamp-2 px-1 break-words whitespace-pre-wrap w-full"
               :style="{
                 fontSize: `${Math.max(8, ((props.element.fontSize || 10) * 0.9) * (props.scale / 3.8))}px`,
                 color: props.element.color || '#F8FAFC',
                 fontFamily: props.element.fontFamily || 'inherit',
                 fontWeight: props.element.fontWeight || 400
               }"
+              @dblclick.stop="startEditing('text', $event)"
+              title="Double-click to edit text"
             >
-              {{ props.element.text }}
+              <textarea
+                v-if="isEditing && editField === 'text'"
+                ref="textInputRef"
+                v-model="editValue"
+                rows="2"
+                class="w-full bg-slate-950/95 border-2 border-amber-400 rounded p-1 outline-none resize-none text-white text-[10px] shadow-lg ring-2 ring-amber-400/40 select-text cursor-text"
+                @blur="finishEditing"
+                @keydown="e => { if (e.key === 'Enter' && !e.shiftKey) { handleEnter(e); } else if (e.key === 'Escape') { cancelEditing(); } }"
+                @mousedown.stop
+                @click.stop
+              ></textarea>
+              <template v-else>
+                {{ props.element.text }}
+              </template>
             </div>
           </div>
         </template>
@@ -300,7 +430,7 @@ function handleResize(e: MouseEvent, handle: HandleType) {
         class="absolute -bottom-7 left-1/2 -translate-x-1/2 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold px-2 py-0.5 rounded text-[10px] font-mono shadow-lg flex items-center gap-1 z-50 whitespace-nowrap cursor-pointer transition-transform hover:scale-105"
         title="Flip exploration tile"
       >
-        <span>🔄</span>
+        <i class="ri-refresh-line text-xs"></i>
         <span>{{ props.element.isFlipped ? 'Unflip Tile' : 'Flip & Reveal' }}</span>
       </button>
 

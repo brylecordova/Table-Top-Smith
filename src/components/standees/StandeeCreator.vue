@@ -10,14 +10,9 @@ import {
   performUndo,
   performRedo
 } from '../../stores/historyStore.ts';
-import {
-  UserCheck,
-  Plus,
-  Trash2,
-  Copy,
-  Sliders
-} from 'lucide-vue-next';
+
 import type { StandeeItem, CanvasElement, TabletopIcon, ShapeType, PlaceholderPreset } from '../../types/index.ts';
+import { getRemixIconClass } from '../../utils/iconHelper.ts';
 import TransformBox from '../common/TransformBox.vue';
 import AlignmentBar from '../common/AlignmentBar.vue';
 import ElementInspector from '../common/ElementInspector.vue';
@@ -338,6 +333,7 @@ function handleAddIconElement(icon: TabletopIcon) {
     hidden: false,
     opacity: 1,
     iconGlyph: icon.glyph,
+    iconCssClass: icon.cssClass,
     iconColor: '#F59E0B'
   };
   currentElements.value.push(newEl);
@@ -392,8 +388,9 @@ function handleInsertInlineIcon(icon: TabletopIcon) {
 function handleSetPortraitIcon(icon: TabletopIcon) {
   if (activeStandee.value) {
     snapshotState();
-    activeStandee.value.icon = icon.glyph;
+    activeStandee.value.icon = icon.cssClass || icon.glyph;
     persistChanges();
+    showToast(`Set standee icon to ${icon.name}`);
   }
 }
 
@@ -460,7 +457,7 @@ function handleDeleteElement(id: string) {
             : 'hover:bg-slate-800/60 text-slate-300 border border-transparent'"
         >
           <div class="flex items-center gap-2 truncate">
-            <span class="text-base shrink-0">{{ st.icon || '♟️' }}</span>
+            <i :class="[getRemixIconClass(st.icon, 'ri-user-star-line'), 'text-base text-amber-400 shrink-0']"></i>
             <div class="truncate">
               <div class="font-medium truncate">{{ st.name }}</div>
               <div class="text-[10px] text-slate-500 font-mono">{{ st.role }} · {{ st.widthMm }}×{{ st.heightMm }}mm</div>
@@ -529,7 +526,7 @@ function handleDeleteElement(id: string) {
                 backgroundColor: activeStandee.color
               }"
             >
-              <div class="text-4xl filter drop-shadow">{{ activeStandee.icon }}</div>
+              <i :class="[getRemixIconClass(activeStandee.icon, 'ri-user-star-line'), 'text-4xl text-amber-400 filter drop-shadow']"></i>
               <div class="text-xs font-bold text-white font-display mt-1">{{ activeStandee.name }}</div>
             </div>
           </div>
@@ -562,7 +559,9 @@ function handleDeleteElement(id: string) {
                 <span class="text-[9px] font-mono tracking-widest uppercase bg-black/40 text-amber-300 px-2 py-0.5 rounded-full">
                   {{ activeStandee.role }}
                 </span>
-                <div class="text-5xl filter drop-shadow my-auto">{{ activeStandee.icon }}</div>
+                <div class="text-5xl filter drop-shadow my-auto">
+                  <i :class="[getRemixIconClass(activeStandee.icon, 'ri-user-star-line'), 'text-amber-400']"></i>
+                </div>
                 <div class="w-full bg-black/60 py-1 px-2 rounded border border-white/20 text-center">
                   <span class="text-xs font-bold text-white font-display truncate block">{{ activeStandee.name }}</span>
                 </div>

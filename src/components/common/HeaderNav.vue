@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { project, isSaving, activeTool, isAssetSidebarOpen, showToast } from '../../stores/projectStore.ts';
-import { Download, Sparkles, FolderKanban } from 'lucide-vue-next';
 
 function handleExportProduction() {
   activeTool.value = 'print';
@@ -67,7 +66,7 @@ function handleExportProduction() {
         class="px-2.5 py-1 text-xs rounded border border-slate-700 hover:border-slate-600 bg-slate-900 text-slate-300 hover:text-white flex items-center gap-1.5 transition-colors"
         title="Toggle Persistent Asset Manager"
       >
-        <FolderKanban class="w-3.5 h-3.5 text-amber-400" />
+        <i class="ri-folder-6-line text-amber-400 text-sm"></i>
         <span class="hidden sm:inline">Assets</span>
       </button>
 
@@ -79,8 +78,8 @@ function handleExportProduction() {
         @click="handleExportProduction"
         class="px-3.5 py-1.5 text-xs font-medium text-slate-950 bg-amber-400 hover:bg-amber-300 rounded font-display transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 shadow-sm"
       >
-        <Download class="w-3.5 h-3.5" />
-        Export Production Pack
+        <i class="ri-download-2-line text-sm"></i>
+        Export Pack
       </button>
     </div>
   </header>

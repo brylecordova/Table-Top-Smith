@@ -12,19 +12,7 @@ import {
   performUndo,
   performRedo
 } from '../../stores/historyStore.ts';
-import {
-  Map,
-  Plus,
-  Trash2,
-  Copy,
-  Sliders,
-  Grid,
-  Hexagon,
-  Square,
-  RefreshCw,
-  Compass,
-  Sparkles
-} from 'lucide-vue-next';
+
 import type {
   BoardItem,
   BoardZone,
@@ -33,6 +21,7 @@ import type {
   ShapeType,
   PlaceholderPreset
 } from '../../types/index.ts';
+import { getRemixIconClass } from '../../utils/iconHelper.ts';
 import TransformBox from '../common/TransformBox.vue';
 import AlignmentBar from '../common/AlignmentBar.vue';
 import ElementInspector from '../common/ElementInspector.vue';
@@ -343,6 +332,7 @@ function handleAddIconElement(icon: TabletopIcon) {
     hidden: false,
     opacity: 1,
     iconGlyph: icon.glyph,
+    iconCssClass: icon.cssClass,
     iconColor: '#F59E0B'
   };
   currentElements.value.push(newEl);
@@ -560,7 +550,7 @@ function handleApplyTemplate() {
       <div class="p-3 border-t border-slate-800 bg-[#0B0F17]/80 space-y-2">
         <div class="flex items-center justify-between text-xs">
           <span class="text-[10px] text-slate-400 font-mono uppercase tracking-wider flex items-center gap-1">
-            <Compass class="w-3.5 h-3.5 text-amber-400" />
+            <i class="ri-compass-3-line text-amber-400 text-sm"></i>
             Exploration Mode
           </span>
           <button
@@ -606,7 +596,7 @@ function handleApplyTemplate() {
       <div class="h-9 border-b border-slate-800/80 bg-[#0B0F17]/60 px-4 flex items-center justify-between shrink-0 select-none">
         <div class="flex items-center gap-3">
           <span class="text-xs text-white font-medium flex items-center gap-1.5 font-display">
-            <Map class="w-3.5 h-3.5 text-amber-400" />
+            <i class="ri-map-2-line text-amber-400 text-sm"></i>
             {{ activeBoard?.name }}
             <span class="text-slate-500 font-mono text-[11px] font-normal">({{ activeBoard?.dimensionsMm.width }} × {{ activeBoard?.dimensionsMm.height }} mm)</span>
           </span>
@@ -616,20 +606,20 @@ function handleApplyTemplate() {
           <!-- Add Hexagon Tile Button -->
           <button
             @click="handleAddHexTile"
-            class="px-2.5 py-1 text-xs text-amber-300 font-semibold bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 rounded flex items-center gap-1.5 transition-colors font-mono"
+            class="px-2.5 py-1 text-xs text-amber-300 font-semibold bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 rounded flex items-center gap-1.5 transition-colors font-mono cursor-pointer"
             title="Add a flippable Hexagon exploration tile for map discovery"
           >
-            <Hexagon class="w-3.5 h-3.5 text-amber-400" />
-            + Hex Tile (Exploration)
+            <i class="ri-shape-line text-amber-400 text-sm"></i>
+            + Hex Tile
           </button>
 
           <!-- Add Zone Button -->
           <button
             @click="handleAddZone('rectangle')"
-            class="px-2.5 py-1 text-xs text-slate-200 bg-slate-900 hover:bg-slate-800 border border-slate-700/80 rounded flex items-center gap-1 transition-colors"
+            class="px-2.5 py-1 text-xs text-slate-200 bg-slate-900 hover:bg-slate-800 border border-slate-700/80 rounded flex items-center gap-1 transition-colors cursor-pointer"
           >
-            <Plus class="w-3.5 h-3.5 text-slate-400" />
-            + Box Zone
+            <i class="ri-add-line text-slate-400 text-sm"></i>
+            + Zone
           </button>
         </div>
       </div>
@@ -688,9 +678,9 @@ function handleApplyTemplate() {
               v-if="activeBoard.zones.length === 0 && currentElements.length === 0"
               class="absolute inset-0 flex flex-col items-center justify-center text-slate-500 font-mono text-xs gap-2 pointer-events-none"
             >
-              <Compass class="w-8 h-8 text-slate-600 animate-pulse" />
+              <i class="ri-compass-3-line text-3xl text-slate-600 animate-pulse"></i>
               <span>Blank Game Board Canvas</span>
-              <span class="text-[10px] text-slate-600">Use [+ Hex Tile], [+ Add Box / Layer], or [Template] above</span>
+              <span class="text-[10px] text-slate-600">Use [+ Hex Tile], [+ Box], or [Template] above</span>
             </div>
 
             <!-- Board Zones (Rectangles, Circles, and Hexagons with Flip State) -->
@@ -729,14 +719,14 @@ function handleApplyTemplate() {
                 />
               </svg>
               <div class="flex items-center justify-between w-full z-10">
-                <span class="text-sm filter drop-shadow">{{ z.isFlipped ? (z.flippedIcon || '✨') : (z.icon || (z.shape === 'hex' ? '⬢' : '📍')) }}</span>
+                <i :class="[getRemixIconClass(z.isFlipped ? (z.flippedIcon || '✨') : (z.icon || (z.shape === 'hex' ? '⬢' : '📍'))), 'text-amber-400 text-sm filter drop-shadow']"></i>
                 <button
                   v-if="!isExplorationTestMode"
                   @click.stop="z.isFlipped = !z.isFlipped; persistChanges()"
-                  class="opacity-0 group-hover:opacity-100 px-1 py-0.5 rounded text-[8px] font-mono bg-black/70 text-amber-300 hover:bg-black transition-opacity"
+                  class="opacity-0 group-hover:opacity-100 px-1 py-0.5 rounded text-[8px] font-mono bg-black/70 text-amber-300 hover:bg-black transition-opacity cursor-pointer flex items-center justify-center"
                   title="Flip tile to test exploration reveal"
                 >
-                  🔄
+                  <i class="ri-refresh-line text-[10px]"></i>
                 </button>
               </div>
 
@@ -818,7 +808,7 @@ function handleApplyTemplate() {
           >
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-1.5 truncate">
-                <span>{{ z.isFlipped ? (z.flippedIcon || '✨') : (z.icon || (z.shape === 'hex' ? '⬢' : '📍')) }}</span>
+                <i :class="[getRemixIconClass(z.isFlipped ? (z.flippedIcon || '✨') : (z.icon || (z.shape === 'hex' ? '⬢' : '📍'))), 'text-amber-400 text-sm shrink-0']"></i>
                 <input
                   v-model="z.name"
                   @input="persistChanges"
@@ -828,17 +818,17 @@ function handleApplyTemplate() {
               <div class="flex items-center gap-1">
                 <button
                   @click="z.isFlipped = !z.isFlipped; persistChanges()"
-                  class="p-1 rounded hover:bg-slate-800 text-slate-400 hover:text-amber-400"
+                  class="p-1 rounded hover:bg-slate-800 text-slate-400 hover:text-amber-400 flex items-center justify-center cursor-pointer"
                   title="Flip Tile"
                 >
-                  <RefreshCw class="w-3 h-3" />
+                  <i class="ri-refresh-line text-xs"></i>
                 </button>
                 <button
                   @click="handleDeleteZone(z.id)"
-                  class="p-1 rounded hover:bg-slate-800 text-slate-500 hover:text-red-400"
+                  class="p-1 rounded hover:bg-slate-800 text-slate-500 hover:text-red-400 flex items-center justify-center cursor-pointer"
                   title="Delete Zone"
                 >
-                  <Trash2 class="w-3 h-3" />
+                  <i class="ri-delete-bin-line text-xs"></i>
                 </button>
               </div>
             </div>

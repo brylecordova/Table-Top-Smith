@@ -1,19 +1,5 @@
 <script setup lang="ts">
 import type { CanvasElement } from '../../types/index.ts';
-import {
-  Sliders,
-  Type,
-  Image as ImageIcon,
-  Sparkles,
-  Lock,
-  Unlock,
-  Eye,
-  EyeOff,
-  Palette,
-  Square,
-  Hexagon,
-  RefreshCw
-} from 'lucide-vue-next';
 
 const props = defineProps<{
   element: CanvasElement | null;
@@ -51,31 +37,29 @@ function notifyChange() {
     <!-- Header -->
     <div class="flex items-center justify-between border-b border-slate-800 pb-2">
       <div class="flex items-center gap-1.5 font-semibold text-slate-200 font-display">
-        <component
-          :is="props.element.type === 'text' ? Type : props.element.type === 'image-frame' ? ImageIcon : Sparkles"
-          class="w-3.5 h-3.5 text-amber-400"
-        />
+        <i
+          :class="props.element.type === 'text' ? 'ri-text' : props.element.type === 'image-frame' ? 'ri-image-2-line' : 'ri-sparkling-line'"
+          class="text-amber-400 text-sm"
+        ></i>
         <span class="capitalize">{{ props.element.name || props.element.type }}</span>
       </div>
 
       <div class="flex items-center gap-1">
         <button
           @click="props.element.locked = !props.element.locked; notifyChange()"
-          class="p-1 rounded hover:bg-slate-800"
+          class="p-1 rounded hover:bg-slate-800 cursor-pointer"
           :class="props.element.locked ? 'text-amber-400' : 'text-slate-500 hover:text-slate-300'"
           title="Lock / Unlock Element"
         >
-          <Lock v-if="props.element.locked" class="w-3.5 h-3.5" />
-          <Unlock v-else class="w-3.5 h-3.5" />
+          <i :class="props.element.locked ? 'ri-lock-line' : 'ri-lock-unlock-line'" class="text-sm"></i>
         </button>
         <button
           @click="props.element.hidden = !props.element.hidden; notifyChange()"
-          class="p-1 rounded hover:bg-slate-800"
+          class="p-1 rounded hover:bg-slate-800 cursor-pointer"
           :class="props.element.hidden ? 'text-red-400' : 'text-slate-500 hover:text-slate-300'"
           title="Hide / Show Element"
         >
-          <EyeOff v-if="props.element.hidden" class="w-3.5 h-3.5" />
-          <Eye v-else class="w-3.5 h-3.5" />
+          <i :class="props.element.hidden ? 'ri-eye-off-line' : 'ri-eye-line'" class="text-sm"></i>
         </button>
       </div>
     </div>
@@ -244,15 +228,15 @@ function notifyChange() {
       <!-- Text Container Background / Fill Option -->
       <div class="p-2 bg-slate-900/80 border border-slate-800 rounded-lg space-y-1.5">
         <div class="flex items-center justify-between">
-          <span class="text-[10px] text-slate-400 font-mono">Text Container Background</span>
+          <span class="text-[10px] text-slate-400 font-mono">Background</span>
           <button
             @click="props.element.textHasBackground = !props.element.textHasBackground; if (!props.element.textHasBackground) props.element.textBackgroundColor = 'transparent'; notifyChange()"
-            class="px-2 py-0.5 rounded text-[10px] font-mono border"
+            class="px-2 py-0.5 rounded text-[10px] font-mono border cursor-pointer"
             :class="props.element.textHasBackground === false || props.element.textBackgroundColor === 'transparent'
               ? 'bg-slate-800 text-slate-300 border-slate-700'
               : 'bg-amber-400/20 text-amber-300 border-amber-400/40'"
           >
-            {{ props.element.textHasBackground === false || props.element.textBackgroundColor === 'transparent' ? 'Transparent (No Fill)' : 'Solid / Pill Fill' }}
+            {{ props.element.textHasBackground === false || props.element.textBackgroundColor === 'transparent' ? 'Transparent' : 'Filled' }}
           </button>
         </div>
         <div v-if="props.element.textHasBackground !== false && props.element.textBackgroundColor !== 'transparent'" class="flex items-center gap-2 pt-1">
@@ -273,7 +257,7 @@ function notifyChange() {
           @change="notifyChange"
           class="rounded bg-slate-900 border-slate-700 text-amber-400 focus:ring-0"
         />
-        <span>Drop Shadow for Readability</span>
+        <span>Drop Shadow</span>
       </label>
 
       <div>
@@ -281,11 +265,11 @@ function notifyChange() {
           <span class="text-[10px] text-slate-500 font-mono">Content Text</span>
           <button
             @click="emit('open-icons')"
-            class="text-[10px] text-amber-400 hover:text-amber-300 flex items-center gap-1 font-mono"
+            class="text-[10px] text-amber-400 hover:text-amber-300 flex items-center gap-1 font-mono cursor-pointer"
             title="Open Full Tabletop Icon Library"
           >
-            <Sparkles class="w-3 h-3" />
-            + Icon Library
+            <i class="ri-sparkling-line text-xs"></i>
+            <span>+ Icons</span>
           </button>
         </div>
 
@@ -319,7 +303,7 @@ function notifyChange() {
 
       <!-- Foreground Cutout -->
       <div>
-        <span class="text-[10px] text-slate-400 font-mono">Foreground Character Cutout URL</span>
+        <span class="text-[10px] text-slate-400 font-mono">Foreground Cutout</span>
         <input
           v-model="props.element.fgImageUrl"
           @input="notifyChange"
@@ -330,7 +314,7 @@ function notifyChange() {
 
       <!-- Background Texture -->
       <div>
-        <span class="text-[10px] text-slate-400 font-mono">Background Texture URL</span>
+        <span class="text-[10px] text-slate-400 font-mono">Background Texture</span>
         <input
           v-model="props.element.bgImageUrl"
           @input="notifyChange"
@@ -413,16 +397,17 @@ function notifyChange() {
       <span class="text-[10px] text-slate-500 font-mono uppercase tracking-wider">Icon Glyph Properties</span>
 
       <div class="flex items-center gap-3">
-        <div class="text-4xl p-2 bg-slate-900 border border-slate-800 rounded-lg">
-          {{ props.element.iconGlyph || '⚔️' }}
+        <div class="text-4xl p-2 bg-slate-900 border border-slate-800 rounded-lg flex items-center justify-center min-w-[52px] min-h-[52px]">
+          <i v-if="props.element.iconCssClass" :class="props.element.iconCssClass" class="leading-none text-amber-400"></i>
+          <span v-else>{{ props.element.iconGlyph || '⚔️' }}</span>
         </div>
         <div class="flex-1 space-y-1.5">
           <button
             @click="emit('open-icons')"
-            class="w-full py-1 text-xs rounded bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center justify-center gap-1.5"
+            class="w-full py-1 text-xs rounded bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center justify-center gap-1.5 cursor-pointer"
           >
-            <Sparkles class="w-3.5 h-3.5" />
-            Pick Different Icon
+            <i class="ri-sparkling-line text-sm"></i>
+            Change Icon
           </button>
         </div>
       </div>
@@ -441,42 +426,42 @@ function notifyChange() {
     <!-- SPECIFIC CONTROLS: SHAPE & PLACEHOLDER BOX -->
     <div v-else-if="props.element.type === 'shape'" class="border-t border-slate-800 pt-3 space-y-3">
       <span class="text-[10px] text-slate-500 font-mono uppercase tracking-wider flex items-center gap-1.5">
-        <Hexagon class="w-3.5 h-3.5 text-amber-400" />
-        Shape & Placeholder Box Controls
+        <i class="ri-shape-line text-amber-400 text-sm"></i>
+        Shape Controls
       </span>
 
       <!-- Shape Geometry -->
       <div class="grid grid-cols-2 gap-2">
         <div>
-          <span class="text-[10px] text-slate-400 font-mono">Shape Geometry</span>
+          <span class="text-[10px] text-slate-400 font-mono">Shape</span>
           <select
             v-model="props.element.shapeType"
             @change="notifyChange"
             class="w-full bg-[#1E293B] border border-slate-700 rounded px-2 py-1 text-xs text-white mt-0.5"
           >
-            <option value="rectangle">Rectangle Box</option>
-            <option value="rounded-rect">Rounded Rectangle</option>
-            <option value="hex">Hexagon (Exploration Tile)</option>
-            <option value="circle">Circle / Coin</option>
-            <option value="badge">Shield Badge</option>
+            <option value="rectangle">Rectangle</option>
+            <option value="rounded-rect">Rounded</option>
+            <option value="hex">Hex Tile</option>
+            <option value="circle">Circle</option>
+            <option value="badge">Badge</option>
           </select>
         </div>
         <div>
-          <span class="text-[10px] text-slate-400 font-mono">Placeholder Preset</span>
+          <span class="text-[10px] text-slate-400 font-mono">Preset</span>
           <select
             v-model="props.element.placeholderType"
             @change="notifyChange"
             class="w-full bg-[#1E293B] border border-slate-700 rounded px-2 py-1 text-xs text-white mt-0.5"
           >
-            <option value="custom">Custom Placeholder</option>
-            <option value="header">Header Bar</option>
-            <option value="footer">Footer Bar</option>
-            <option value="portrait">Hero / Art Portrait</option>
-            <option value="effect">Effect / Rules Description</option>
-            <option value="hp">Health Points / HP</option>
-            <option value="marker">Marker / Status Token</option>
-            <option value="cost">Cost / Resource Badge</option>
-            <option value="stats">Stat Strip</option>
+            <option value="custom">Custom</option>
+            <option value="header">Header</option>
+            <option value="footer">Footer</option>
+            <option value="portrait">Portrait</option>
+            <option value="effect">Effect</option>
+            <option value="hp">HP</option>
+            <option value="marker">Marker</option>
+            <option value="cost">Cost</option>
+            <option value="stats">Stats</option>
           </select>
         </div>
       </div>
@@ -484,7 +469,7 @@ function notifyChange() {
       <!-- Placeholder Label & Tag -->
       <div>
         <div class="flex items-center justify-between">
-          <span class="text-[10px] text-slate-400 font-mono">Placeholder Label Tag</span>
+          <span class="text-[10px] text-slate-400 font-mono">Label Tag</span>
           <label class="flex items-center gap-1.5 text-[10px] text-slate-400 cursor-pointer">
             <input
               type="checkbox"
@@ -492,13 +477,13 @@ function notifyChange() {
               @change="notifyChange"
               class="rounded bg-slate-900 border-slate-700 text-amber-400 focus:ring-0"
             />
-            <span>Show Tag Overlay</span>
+            <span>Show Tag</span>
           </label>
         </div>
         <input
           v-model="props.element.placeholderLabel"
           @input="notifyChange"
-          placeholder="e.g. PORTRAIT ZONE, EFFECT DESCRIPTION, HP..."
+          placeholder="e.g. PORTRAIT ZONE, EFFECT, HP..."
           class="w-full bg-[#1E293B] border border-slate-700 rounded px-2.5 py-1 text-xs text-white mt-1"
         />
       </div>
@@ -507,12 +492,12 @@ function notifyChange() {
       <div class="grid grid-cols-2 gap-2">
         <div>
           <div class="flex items-center justify-between">
-            <span class="text-[10px] text-slate-500 font-mono">Box Fill Color</span>
+            <span class="text-[10px] text-slate-500 font-mono">Fill Color</span>
             <button
               @click="props.element.backgroundColor = 'transparent'; notifyChange()"
-              class="text-[9px] text-slate-400 hover:text-amber-300 font-mono"
+              class="text-[9px] text-slate-400 hover:text-amber-300 font-mono cursor-pointer"
             >
-              No Fill
+              Clear
             </button>
           </div>
           <input
@@ -577,7 +562,7 @@ function notifyChange() {
       <!-- TYPOGRAPHY & TEXT STYLING FOR HEADER / FOOTER / PLACEHOLDERS -->
       <div class="border-t border-slate-800/80 pt-2 space-y-2">
         <span class="text-[10px] font-semibold text-slate-400 font-mono uppercase tracking-wider flex items-center gap-1.5">
-          <Type class="w-3.5 h-3.5 text-amber-400" />
+          <i class="ri-text text-amber-400 text-sm"></i>
           Text Styling & Typography
         </span>
 
@@ -644,19 +629,19 @@ function notifyChange() {
         <!-- Text Bounding Box Background / Transparent Fill Option -->
         <div class="p-2 bg-slate-900/80 border border-slate-800 rounded-lg space-y-1.5">
           <div class="flex items-center justify-between">
-            <span class="text-[10px] text-slate-400 font-mono">Text Container Background</span>
+            <span class="text-[10px] text-slate-400 font-mono">Background</span>
             <button
               @click="props.element.textHasBackground = !props.element.textHasBackground; if (!props.element.textHasBackground) props.element.textBackgroundColor = 'transparent'; notifyChange()"
-              class="px-2 py-0.5 rounded text-[10px] font-mono border transition-colors"
+              class="px-2 py-0.5 rounded text-[10px] font-mono border transition-colors cursor-pointer"
               :class="props.element.textHasBackground === false || props.element.textBackgroundColor === 'transparent'
                 ? 'bg-slate-800 text-slate-300 border-slate-700'
                 : 'bg-amber-400/20 text-amber-300 border-amber-400/40'"
             >
-              {{ props.element.textHasBackground === false || props.element.textBackgroundColor === 'transparent' ? 'Transparent (No Container Fill)' : 'Pill Container Fill' }}
+              {{ props.element.textHasBackground === false || props.element.textBackgroundColor === 'transparent' ? 'Transparent' : 'Filled' }}
             </button>
           </div>
           <div v-if="props.element.textHasBackground !== false && props.element.textBackgroundColor !== 'transparent'" class="flex items-center gap-2 pt-1">
-            <span class="text-[9px] text-slate-500 font-mono">Container Color:</span>
+            <span class="text-[9px] text-slate-500 font-mono">Color:</span>
             <input
               type="color"
               v-model="props.element.textBackgroundColor"
@@ -669,13 +654,13 @@ function notifyChange() {
         <!-- Optional Subtext / Rules Content -->
         <div>
           <div class="flex items-center justify-between">
-            <span class="text-[10px] text-slate-500 font-mono">Subtext / Rules Snippet</span>
+            <span class="text-[10px] text-slate-500 font-mono">Subtext / Rules</span>
             <button
               @click="emit('open-icons')"
-              class="text-[10px] text-amber-400 hover:text-amber-300 flex items-center gap-1 font-mono"
+              class="text-[10px] text-amber-400 hover:text-amber-300 flex items-center gap-1 font-mono cursor-pointer"
             >
-              <Sparkles class="w-3 h-3" />
-              + Icon
+              <i class="ri-sparkling-line text-xs"></i>
+              + Icons
             </button>
           </div>
           <textarea
@@ -690,7 +675,7 @@ function notifyChange() {
 
       <!-- Icon in Box -->
       <div class="border-t border-slate-800/80 pt-2">
-        <span class="text-[10px] text-slate-500 font-mono">Box Icon Glyph</span>
+        <span class="text-[10px] text-slate-500 font-mono">Icon Glyph</span>
         <div class="flex items-center gap-1.5 mt-0.5">
           <input
             v-model="props.element.iconGlyph"
@@ -700,10 +685,10 @@ function notifyChange() {
           />
           <button
             @click="emit('open-icons')"
-            class="py-1 px-2 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-mono flex items-center gap-1"
+            class="py-1 px-2 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-mono flex items-center gap-1 cursor-pointer"
           >
-            <Sparkles class="w-3 h-3 text-amber-400" />
-            Choose Tabletop Icon...
+            <i class="ri-sparkling-line text-amber-400 text-xs"></i>
+            Pick Icon
           </button>
         </div>
       </div>
@@ -712,15 +697,15 @@ function notifyChange() {
       <div v-if="props.element.shapeType === 'hex' || props.element.isFlipped !== undefined" class="border-t border-slate-800/80 pt-2 space-y-2">
         <div class="flex items-center justify-between">
           <span class="text-[10px] font-semibold text-amber-300 font-mono uppercase tracking-wider flex items-center gap-1">
-            <RefreshCw class="w-3 h-3 text-amber-400" />
-            Exploration Tile Flip Mode
+            <i class="ri-refresh-line text-amber-400 text-xs"></i>
+            Tile Flip Mode
           </span>
           <button
             @click="props.element.isFlipped = !props.element.isFlipped; notifyChange()"
-            class="px-2 py-0.5 rounded text-[10px] font-mono border"
+            class="px-2 py-0.5 rounded text-[10px] font-mono border cursor-pointer"
             :class="props.element.isFlipped ? 'bg-amber-400 text-slate-950 border-amber-500 font-bold' : 'bg-slate-800 text-slate-300 border-slate-700'"
           >
-            {{ props.element.isFlipped ? 'Currently Revealed' : 'Currently Unexplored' }}
+            {{ props.element.isFlipped ? 'Revealed' : 'Unexplored' }}
           </button>
         </div>
 
@@ -747,7 +732,7 @@ function notifyChange() {
           </div>
 
           <div>
-            <span class="text-[9px] text-slate-400 font-mono">Revealed Event / Rule Description</span>
+            <span class="text-[9px] text-slate-400 font-mono">Revealed Description</span>
             <input
               v-model="props.element.flippedDescription"
               @input="notifyChange"

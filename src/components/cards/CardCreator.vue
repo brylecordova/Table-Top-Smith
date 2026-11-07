@@ -14,21 +14,9 @@ import {
   performUndo,
   performRedo
 } from '../../stores/historyStore.ts';
-import {
-  Plus,
-  Trash2,
-  Copy,
-  Layers,
-  FileSpreadsheet,
-  Download,
-  RotateCw,
-  Palette,
-  Sliders,
-  Type,
-  Sparkles,
-  Image as ImageIcon
-} from 'lucide-vue-next';
+
 import type { CardItem, CardGroup, CanvasElement, TabletopIcon, AssetItem, ShapeType, PlaceholderPreset } from '../../types/index.ts';
+import { getRemixIconClass } from '../../utils/iconHelper.ts';
 import TransformBox from '../common/TransformBox.vue';
 import AlignmentBar from '../common/AlignmentBar.vue';
 import ElementInspector from '../common/ElementInspector.vue';
@@ -208,6 +196,7 @@ function handleAddIconElement(icon: TabletopIcon) {
     hidden: false,
     opacity: 1,
     iconGlyph: icon.glyph,
+    iconCssClass: icon.cssClass,
     iconColor: '#F59E0B'
   };
   currentElements.value.push(newEl);
@@ -223,9 +212,11 @@ function handleInsertInlineIcon(icon: TabletopIcon) {
       activeElement.value.text = (activeElement.value.text || '') + (activeElement.value.text ? ' ' : '') + icon.glyph;
       if (activeElement.value.type === 'shape' && !activeElement.value.iconGlyph) {
         activeElement.value.iconGlyph = icon.glyph;
+        activeElement.value.iconCssClass = icon.cssClass;
       }
     } else if (activeElement.value.type === 'icon') {
       activeElement.value.iconGlyph = icon.glyph;
+      activeElement.value.iconCssClass = icon.cssClass;
       activeElement.value.name = `${icon.name} Emblem`;
     }
     persistChanges();
@@ -261,7 +252,14 @@ function handleInsertInlineIcon(icon: TabletopIcon) {
 }
 
 function handleSetPortraitIcon(icon: TabletopIcon) {
-  handleAddIconElement(icon);
+  if (activeCard.value) {
+    snapshotState();
+    activeCard.value.artIcon = icon.cssClass || icon.glyph;
+    persistChanges();
+    showToast(`Set card icon to ${icon.name}`);
+  } else {
+    handleAddIconElement(icon);
+  }
 }
 
 // Alignment
@@ -782,7 +780,7 @@ watch(activeCard, () => {
             : 'hover:bg-slate-800/60 text-slate-300 border border-transparent'"
         >
           <div class="flex items-center gap-2 truncate">
-            <span class="text-sm shrink-0">{{ card.artIcon || '⚔️' }}</span>
+            <i :class="[getRemixIconClass(card.artIcon, 'ri-sword-line'), 'text-amber-400 text-sm shrink-0']"></i>
             <div class="truncate">
               <div class="font-medium truncate">{{ card.name }}</div>
               <div class="text-[10px] text-slate-500 truncate">{{ card.type }} · Cost {{ card.cost }}</div>

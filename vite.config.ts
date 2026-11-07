@@ -8,7 +8,7 @@ export default defineConfig(() => {
     plugins: [vue(), tailwindcss()],
     resolve: {
       alias: {
-        '@': path.resolve(import.meta.dirname || __dirname, 'src'),
+        '@': path.resolve(import.meta.dirname, 'src'),
       },
     },
     server: {
