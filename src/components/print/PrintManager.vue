@@ -289,17 +289,19 @@ async function handleExportTts() {
         <span class="text-[10px] text-slate-500 font-mono uppercase tracking-wider">Components to Print</span>
         <button
           @click="activeComponentTab = 'cards'"
-          class="w-full text-left px-2.5 py-1.5 text-xs rounded transition-colors"
+          class="w-full text-left px-2.5 py-1.5 text-xs rounded transition-colors flex items-center"
           :class="activeComponentTab === 'cards' ? 'bg-amber-500/15 text-amber-300 font-medium' : 'text-slate-400 hover:text-white'"
         >
-          🃏 Card Decks ({{ cardListToPrint.length }} cards total)
+          <i class="ri-stack-line text-sm mr-1.5 text-amber-400"></i>
+          <span>Card Decks ({{ cardListToPrint.length }} cards total)</span>
         </button>
         <button
           @click="activeComponentTab = 'tokens'"
-          class="w-full text-left px-2.5 py-1.5 text-xs rounded transition-colors"
+          class="w-full text-left px-2.5 py-1.5 text-xs rounded transition-colors flex items-center"
           :class="activeComponentTab === 'tokens' ? 'bg-amber-500/15 text-amber-300 font-medium' : 'text-slate-400 hover:text-white'"
         >
-          🪙 Tokens Punchboard ({{ tokenSets[0]?.tokens.length || 0 }} sets)
+          <i class="ri-copper-coin-line text-sm mr-1.5 text-amber-400"></i>
+          <span>Tokens Punchboard ({{ tokenSets[0]?.tokens.length || 0 }} sets)</span>
         </button>
         <button
           @click="activeComponentTab = 'standees'"

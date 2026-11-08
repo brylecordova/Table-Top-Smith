@@ -8,9 +8,12 @@ import {
   deleteProject,
   isLoading
 } from '../../stores/projectStore.ts';
+import { activeTheme, currentThemeId, customAccentColor } from '../../stores/themeStore.ts';
+import ThemeConfigModal from './ThemeConfigModal.vue';
 
 const searchQuery = ref('');
 const showNewProjectModal = ref(false);
+const showThemeModal = ref(false);
 const newProjectName = ref('');
 const newProjectDesc = ref('');
 const selectedPreset = ref<'boardgame' | 'cardgame' | 'skirmish'>('boardgame');
@@ -63,50 +66,122 @@ function formatDate(isoStr?: string) {
 </script>
 
 <template>
-  <div class="min-h-screen w-full bg-[#0B0F17] text-slate-100 flex flex-col font-sans select-none overflow-y-auto">
+  <div
+    class="min-h-screen w-full flex flex-col font-sans select-none overflow-y-auto transition-colors"
+    :style="{ backgroundColor: activeTheme.bgBase, color: activeTheme.textBase }"
+  >
     <!-- Main Menu Top Brand Bar -->
-    <header class="border-b border-slate-800/80 bg-[#0B0F17]/90 backdrop-blur-md px-8 py-4 flex items-center justify-between sticky top-0 z-20">
+    <header
+      class="border-b px-8 py-4 flex items-center justify-between sticky top-0 z-20 backdrop-blur-md transition-colors"
+      :style="{
+        borderColor: activeTheme.borderBase,
+        backgroundColor: activeTheme.bgSurface + 'EE'
+      }"
+    >
       <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-lg bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 font-bold text-base shadow-sm">
+        <div
+          class="w-9 h-9 rounded-lg border flex items-center justify-center font-bold text-base shadow-sm transition-colors"
+          :style="{
+            backgroundColor: 'color-mix(in srgb, ' + activeTheme.accentColor + ' 20%, transparent)',
+            borderColor: 'color-mix(in srgb, ' + activeTheme.accentColor + ' 40%, transparent)',
+            color: activeTheme.accentColor
+          }"
+        >
           TS
         </div>
         <div>
-          <h1 class="text-lg font-bold tracking-tight text-white font-display">TableSmith Studio</h1>
-          <p class="text-[11px] text-slate-400 font-mono">Board Game Prototyping, Card Engine & Imposition Workstation</p>
+          <h1 class="text-lg font-bold tracking-tight font-display" :style="{ color: activeTheme.textBase }">
+            TableSmith Studio
+          </h1>
+          <p class="text-[11px] font-mono" :style="{ color: activeTheme.textMuted }">
+            Board Game Prototyping, Card Engine & Imposition Workstation
+          </p>
         </div>
       </div>
 
-      <button
-        @click="showNewProjectModal = true"
-        class="px-4 py-2 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-semibold text-xs flex items-center gap-2 transition-all shadow-md shadow-amber-500/10 cursor-pointer"
-      >
-        <i class="ri-add-line text-sm font-bold"></i>
-        <span>Create New Project</span>
-      </button>
+      <div class="flex items-center gap-3">
+        <!-- Theme & Accent Configuration Button -->
+        <button
+          @click="showThemeModal = true"
+          class="px-3.5 py-2 rounded-lg border flex items-center gap-2 text-xs font-semibold transition-all shadow-sm hover:scale-[1.02] cursor-pointer"
+          :style="{
+            backgroundColor: activeTheme.bgCard,
+            borderColor: activeTheme.borderBase,
+            color: activeTheme.textBase
+          }"
+          title="Customize Editor Theme Presets & Accent Color"
+        >
+          <span
+            class="w-3.5 h-3.5 rounded-full shadow-xs shrink-0 flex items-center justify-center"
+            :style="{ backgroundColor: activeTheme.accentColor }"
+          ></span>
+          <i class="ri-palette-line text-sm" :style="{ color: activeTheme.accentColor }"></i>
+          <span>Theme & Accents</span>
+          <span
+            class="hidden md:inline text-[10px] font-mono px-1.5 py-0.5 rounded border"
+            :style="{ borderColor: activeTheme.borderBase, color: activeTheme.textMuted }"
+          >
+            {{ activeTheme.name.split(' (')[0] }}
+          </span>
+        </button>
+
+        <!-- Create New Project Button -->
+        <button
+          @click="showNewProjectModal = true"
+          class="px-4 py-2 rounded-lg font-semibold text-xs flex items-center gap-2 transition-all shadow-md cursor-pointer hover:brightness-110"
+          :style="{
+            backgroundColor: activeTheme.accentColor,
+            color: activeTheme.accentText
+          }"
+        >
+          <i class="ri-add-line text-sm font-bold"></i>
+          <span>Create New Project</span>
+        </button>
+      </div>
     </header>
 
     <!-- Main Content Container -->
     <main class="flex-1 max-w-6xl w-full mx-auto px-6 py-10 space-y-10">
       <!-- Hero Welcome Card -->
-      <section class="relative overflow-hidden rounded-2xl border border-slate-800 bg-gradient-to-br from-slate-900/90 via-[#0F172A]/80 to-[#131B2A] p-8 shadow-2xl">
-        <div class="absolute -right-10 -bottom-10 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl pointer-events-none"></div>
+      <section
+        class="relative overflow-hidden rounded-2xl border p-8 shadow-2xl transition-colors"
+        :style="{
+          backgroundColor: activeTheme.bgSurface,
+          borderColor: activeTheme.borderBase
+        }"
+      >
+        <div
+          class="absolute -right-10 -bottom-10 w-96 h-96 rounded-full blur-3xl pointer-events-none opacity-20"
+          :style="{ backgroundColor: activeTheme.accentColor }"
+        ></div>
 
         <div class="relative z-10 max-w-2xl space-y-3">
-          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400/10 border border-amber-400/20 text-amber-300 text-xs font-mono">
+          <div
+            class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono border"
+            :style="{
+              backgroundColor: 'color-mix(in srgb, ' + activeTheme.accentColor + ' 15%, transparent)',
+              borderColor: 'color-mix(in srgb, ' + activeTheme.accentColor + ' 30%, transparent)',
+              color: activeTheme.accentColor
+            }"
+          >
             <i class="ri-sparkling-line"></i>
             <span>Tabletop Design Suite</span>
           </div>
-          <h2 class="text-3xl font-extrabold text-white tracking-tight font-display">
+          <h2 class="text-3xl font-extrabold tracking-tight font-display" :style="{ color: activeTheme.textBase }">
             Design, Imposition & Manufacture Your Board Games
           </h2>
-          <p class="text-sm text-slate-300 leading-relaxed">
+          <p class="text-sm leading-relaxed" :style="{ color: activeTheme.textMuted }">
             Create custom card groups, folding box dielines, punchboard die-cut tokens, figure standees, and game boards with print-ready duplex PDF export.
           </p>
 
           <div class="pt-3 flex flex-wrap items-center gap-3">
             <button
               @click="showNewProjectModal = true"
-              class="px-5 py-2.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs flex items-center gap-2 transition-all shadow-lg shadow-amber-500/15 cursor-pointer"
+              class="px-5 py-2.5 rounded-lg font-bold text-xs flex items-center gap-2 transition-all shadow-lg cursor-pointer hover:brightness-110"
+              :style="{
+                backgroundColor: activeTheme.accentColor,
+                color: activeTheme.accentText
+              }"
             >
               <i class="ri-add-circle-line text-base"></i>
               <span>Create New Project</span>
@@ -114,9 +189,14 @@ function formatDate(isoStr?: string) {
             <button
               v-if="projectsList.length > 0"
               @click="openProject(projectsList[0]._id)"
-              class="px-5 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium flex items-center gap-2 transition-all cursor-pointer"
+              class="px-5 py-2.5 rounded-lg border text-xs font-medium flex items-center gap-2 transition-all cursor-pointer hover:bg-slate-800/40"
+              :style="{
+                backgroundColor: activeTheme.bgCard,
+                borderColor: activeTheme.borderBase,
+                color: activeTheme.textBase
+              }"
             >
-              <i class="ri-folder-open-line text-base text-amber-400"></i>
+              <i class="ri-folder-open-line text-base" :style="{ color: activeTheme.accentColor }"></i>
               <span>Open Most Recent ({{ projectsList[0].name }})</span>
             </button>
           </div>
@@ -125,22 +205,29 @@ function formatDate(isoStr?: string) {
 
       <!-- Existing Projects Section -->
       <section class="space-y-4">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-3" :style="{ borderColor: activeTheme.borderBase }">
           <div>
-            <h3 class="text-base font-bold text-white font-display flex items-center gap-2">
-              <i class="ri-folder-open-line text-amber-400"></i>
+            <h3 class="text-base font-bold font-display flex items-center gap-2" :style="{ color: activeTheme.textBase }">
+              <i class="ri-folder-open-line" :style="{ color: activeTheme.accentColor }"></i>
               <span>Open / Work on Existing Project</span>
             </h3>
-            <p class="text-xs text-slate-400">Select a saved board game project to resume editing in the canvas studio</p>
+            <p class="text-xs" :style="{ color: activeTheme.textMuted }">
+              Select a saved board game project to resume editing in the canvas studio
+            </p>
           </div>
 
           <!-- Search Bar -->
           <div class="relative w-full sm:w-72">
-            <i class="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+            <i class="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-xs" :style="{ color: activeTheme.textMuted }"></i>
             <input
               v-model="searchQuery"
               placeholder="Filter saved projects..."
-              class="w-full bg-[#1E293B] border border-slate-700 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400"
+              class="w-full border rounded-lg pl-8 pr-3 py-1.5 text-xs focus:outline-none"
+              :style="{
+                backgroundColor: activeTheme.bgCard,
+                borderColor: activeTheme.borderBase,
+                color: activeTheme.textBase
+              }"
             />
           </div>
         </div>
@@ -151,19 +238,30 @@ function formatDate(isoStr?: string) {
             v-for="proj in filteredProjects"
             :key="proj._id"
             @click="openProject(proj._id)"
-            class="group p-5 rounded-xl border border-slate-800 hover:border-amber-500/50 bg-[#0F172A]/70 hover:bg-slate-900/90 transition-all cursor-pointer flex flex-col justify-between space-y-4 shadow-sm hover:shadow-xl relative"
+            class="group p-5 rounded-xl border transition-all cursor-pointer flex flex-col justify-between space-y-4 shadow-sm hover:shadow-xl relative"
+            :style="{
+              backgroundColor: activeTheme.bgCard,
+              borderColor: activeTheme.borderBase
+            }"
           >
             <div>
               <div class="flex items-start justify-between gap-2">
                 <div class="flex items-center gap-2">
-                  <div class="w-8 h-8 rounded bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
+                  <div
+                    class="w-8 h-8 rounded border flex items-center justify-center shrink-0"
+                    :style="{
+                      backgroundColor: 'color-mix(in srgb, ' + activeTheme.accentColor + ' 15%, transparent)',
+                      borderColor: 'color-mix(in srgb, ' + activeTheme.accentColor + ' 30%, transparent)',
+                      color: activeTheme.accentColor
+                    }"
+                  >
                     <i class="ri-stack-line text-base"></i>
                   </div>
                   <div>
-                    <h4 class="text-sm font-bold text-white group-hover:text-amber-200 transition-colors line-clamp-1 font-display">
+                    <h4 class="text-sm font-bold line-clamp-1 font-display" :style="{ color: activeTheme.textBase }">
                       {{ proj.name }}
                     </h4>
-                    <span class="text-[10px] text-slate-500 font-mono">Updated {{ formatDate(proj.updatedAt) }}</span>
+                    <span class="text-[10px] font-mono" :style="{ color: activeTheme.textMuted }">Updated {{ formatDate(proj.updatedAt) }}</span>
                   </div>
                 </div>
 
@@ -177,17 +275,17 @@ function formatDate(isoStr?: string) {
                 </button>
               </div>
 
-              <p class="text-xs text-slate-400 mt-3 line-clamp-2 leading-relaxed">
+              <p class="text-xs mt-3 line-clamp-2 leading-relaxed" :style="{ color: activeTheme.textMuted }">
                 {{ proj.description || 'Custom tabletop game project created with TableSmith.' }}
               </p>
             </div>
 
             <!-- Footer Meta & Open CTA -->
-            <div class="pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs">
-              <span class="text-[10px] text-slate-500 font-mono uppercase tracking-wider">
+            <div class="pt-3 border-t flex items-center justify-between text-xs" :style="{ borderColor: activeTheme.borderBase }">
+              <span class="text-[10px] font-mono uppercase tracking-wider" :style="{ color: activeTheme.textMuted }">
                 Unit: {{ proj.unit }} · Bleed: {{ proj.bleedMm }}mm
               </span>
-              <span class="text-amber-400 font-semibold group-hover:translate-x-0.5 transition-transform flex items-center gap-1 text-[11px]">
+              <span class="font-semibold group-hover:translate-x-0.5 transition-transform flex items-center gap-1 text-[11px]" :style="{ color: activeTheme.accentColor }">
                 <span>Open Project</span>
                 <i class="ri-arrow-right-line text-xs"></i>
               </span>
@@ -323,5 +421,11 @@ function formatDate(isoStr?: string) {
         </div>
       </div>
     </div>
+
+    <!-- Theme & Accent Configuration Modal -->
+    <ThemeConfigModal
+      :isOpen="showThemeModal"
+      @close="showThemeModal = false"
+    />
   </div>
 </template>

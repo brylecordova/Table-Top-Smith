@@ -5,12 +5,23 @@
     --font-sans: 'Public Sans', system-ui, -apple-system, sans-serif;
     --font-display: 'Outfit', system-ui, -apple-system, sans-serif;
     --font-mono: 'JetBrains Mono', monospace;
+
+    /* Dynamic Theme Variables with defaults */
+    --ts-accent: #F59E0B;
+    --ts-accent-hover: #D97706;
+    --ts-accent-text: #0F172A;
+    --ts-bg-base: #0B0F17;
+    --ts-bg-surface: #0F172A;
+    --ts-bg-card: #1E293B;
+    --ts-border: #334155;
+    --ts-text-base: #F8FAFC;
+    --ts-text-muted: #94A3B8;
   }
 
   body {
     font-family: var(--font-sans);
-    background-color: #0B0F17;
-    color: #F8FAFC;
+    background-color: var(--ts-bg-base, #0B0F17);
+    color: var(--ts-text-base, #F8FAFC);
     overflow-x: hidden;
   }
 
@@ -24,18 +35,223 @@
   }
 }
 
+/* Dynamic theme helper classes */
+.theme-accent-btn {
+  background-color: var(--ts-accent);
+  color: var(--ts-accent-text);
+  transition: all 0.15s ease-in-out;
+}
+.theme-accent-btn:hover {
+  background-color: var(--ts-accent-hover);
+}
+.theme-accent-text {
+  color: var(--ts-accent);
+}
+.theme-accent-border {
+  border-color: var(--ts-accent);
+}
+.theme-accent-bg-soft {
+  background-color: color-mix(in srgb, var(--ts-accent) 15%, transparent);
+  border-color: color-mix(in srgb, var(--ts-accent) 30%, transparent);
+}
+
+/* ==========================================================================
+   TableSmith Dynamic Studio Theme System
+   Provides 100% seamless theme consistency across Main Menu & All Canvas Editors:
+   - Cards & Groups
+   - Box Dielines & Packaging CAD
+   - Game Boards & Hex Exploration Mats
+   - Rulebook & Index Codex
+   - Print Imposition & Duplex Production
+   - Tokens & Standees
+   - Sidebars, Inspector, Layer Panel, and Toolbars
+   ========================================================================== */
+
+/* 1. Base Workplace & Canvas Viewports */
+.bg-\[\#0B0F17\],
+[data-theme] .bg-\[\#0B0F17\],
+.bg-\[\#0B0F17\]\/90,
+.bg-\[\#0B0F17\]\/80,
+.bg-\[\#131B2A\],
+[data-theme] .bg-\[\#131B2A\] {
+  background-color: var(--ts-bg-base) !important;
+}
+
+/* 2. Surfaces, Toolbars & Sub-Sidebars */
+.bg-\[\#0F172A\],
+[data-theme] .bg-\[\#0F172A\],
+.bg-\[\#0F172A\]\/90,
+.bg-\[\#0F172A\]\/80,
+.bg-\[\#0F172A\]\/70 {
+  background-color: var(--ts-bg-surface) !important;
+}
+
+/* 3. Cards, Container Blocks, Dropdowns & Modals */
+.bg-\[\#1E293B\],
+[data-theme] .bg-\[\#1E293B\],
+.bg-\[\#1E293B\]\/90,
+.bg-\[\#1E293B\]\/80,
+.bg-slate-900,
+[data-theme] .bg-slate-900,
+.bg-slate-900\/90,
+.bg-slate-900\/80,
+.bg-slate-900\/70,
+.bg-slate-900\/50,
+.bg-slate-950,
+.bg-slate-950\/95 {
+  background-color: var(--ts-bg-card) !important;
+}
+
+/* 4. Inactive Buttons & Secondary Chips */
+.bg-slate-800,
+[data-theme] .bg-slate-800,
+.bg-slate-800\/60,
+.bg-slate-800\/50,
+.bg-slate-800\/40,
+.hover\:bg-slate-800:hover,
+.hover\:bg-slate-800\/60:hover,
+.hover\:bg-slate-700:hover {
+  background-color: color-mix(in srgb, var(--ts-border) 40%, var(--ts-bg-card)) !important;
+}
+
+/* 5. Workstation Borders & Dividers */
+.border-slate-800,
+[data-theme] .border-slate-800,
+.border-slate-800\/80,
+.border-slate-800\/60,
+.border-slate-800\/50,
+.border-slate-700,
+[data-theme] .border-slate-700,
+.border-slate-700\/80,
+.border-slate-700\/60 {
+  border-color: var(--ts-border) !important;
+}
+
+/* 6. Dynamic Primary Accent Color (Buttons, Badges, Highlights) */
+.bg-amber-400,
+[data-theme] .bg-amber-400,
+.bg-amber-500,
+[data-theme] .bg-amber-500 {
+  background-color: var(--ts-accent) !important;
+  color: var(--ts-accent-text) !important;
+}
+
+.bg-amber-400:hover,
+[data-theme] .bg-amber-400:hover,
+.hover\:bg-amber-300:hover,
+.hover\:bg-amber-400:hover {
+  background-color: var(--ts-accent-hover) !important;
+  color: var(--ts-accent-text) !important;
+}
+
+/* 7. Accent Highlights, Tags & Selected List Items */
+.bg-amber-500\/10,
+.bg-amber-500\/15,
+.bg-amber-500\/20,
+.bg-amber-400\/10,
+.bg-amber-400\/15,
+.bg-amber-400\/20 {
+  background-color: color-mix(in srgb, var(--ts-accent) 15%, transparent) !important;
+}
+
+.border-amber-400,
+[data-theme] .border-amber-400,
+.border-amber-500,
+[data-theme] .border-amber-500 {
+  border-color: var(--ts-accent) !important;
+}
+
+.border-amber-500\/20,
+.border-amber-500\/30,
+.border-amber-500\/40,
+.border-amber-500\/50,
+.border-amber-400\/20,
+.border-amber-400\/30,
+.border-amber-400\/40,
+.border-amber-400\/50,
+.hover\:border-amber-400\/50:hover,
+.hover\:border-amber-500\/50:hover {
+  border-color: color-mix(in srgb, var(--ts-accent) 45%, transparent) !important;
+}
+
+.text-amber-400,
+[data-theme] .text-amber-400,
+.text-amber-300,
+[data-theme] .text-amber-300,
+.text-amber-500,
+[data-theme] .text-amber-500,
+.text-amber-200,
+[data-theme] .text-amber-200 {
+  color: var(--ts-accent) !important;
+}
+
+.focus\:border-amber-400:focus,
+.focus\:border-amber-500:focus {
+  border-color: var(--ts-accent) !important;
+}
+
+.accent-amber-400 {
+  accent-color: var(--ts-accent) !important;
+}
+
+/* 8. Active Selection Outline & Transform Box Handles */
+.border-2.border-amber-400,
+.border-2.border-amber-500 {
+  border-color: var(--ts-accent) !important;
+}
+
+/* 9. Light & Parchment Theme Text and Input Contrast */
+[data-theme="light"],
+[data-theme="parchment"] {
+  color: var(--ts-text-base);
+}
+
+[data-theme="light"] .text-white,
+[data-theme="parchment"] .text-white,
+[data-theme="light"] .text-slate-100,
+[data-theme="parchment"] .text-slate-100,
+[data-theme="light"] .text-slate-200,
+[data-theme="parchment"] .text-slate-200 {
+  color: var(--ts-text-base) !important;
+}
+
+[data-theme="light"] .text-slate-300,
+[data-theme="parchment"] .text-slate-300,
+[data-theme="light"] .text-slate-400,
+[data-theme="parchment"] .text-slate-400 {
+  color: var(--ts-text-muted) !important;
+}
+
+[data-theme="light"] input,
+[data-theme="parchment"] input,
+[data-theme="light"] textarea,
+[data-theme="parchment"] textarea,
+[data-theme="light"] select,
+[data-theme="parchment"] select {
+  color: var(--ts-text-base) !important;
+  background-color: var(--ts-bg-card) !important;
+  border-color: var(--ts-border) !important;
+}
+
+[data-theme="light"] input::placeholder,
+[data-theme="parchment"] input::placeholder,
+[data-theme="light"] textarea::placeholder,
+[data-theme="parchment"] textarea::placeholder {
+  color: var(--ts-text-muted) !important;
+}
+
 /* Custom workstation scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #0B0F17;
+  background: var(--ts-bg-base);
 }
 ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: var(--ts-border);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: var(--ts-accent);
 }
