@@ -74,8 +74,48 @@ function handleContainerDblClick(e: MouseEvent) {
   }
 }
 
+const textLines = computed(() => {
+  const text = props.element.text || '';
+  return text.split('\n');
+});
+
+function getListPrefix(index: number, style?: string): string {
+  if (style === 'disc') return '•';
+  if (style === 'decimal') return `${index + 1}.`;
+  if (style === 'alpha') {
+    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const char = letters[index % 26];
+    return `${char}.`;
+  }
+  return '';
+}
+
 const transformStyle = computed(() => {
   const el = props.element;
+  const boxShadows: string[] = [];
+
+  if (el.hasDropShadow) {
+    const x = el.shadowOffsetX ?? 2;
+    const y = el.shadowOffsetY ?? 3;
+    const blur = el.shadowBlur ?? 6;
+    const spread = el.shadowSpread ?? 0;
+    const col = el.shadowColor || 'rgba(0,0,0,0.6)';
+    boxShadows.push(`${x}px ${y}px ${blur}px ${spread}px ${col}`);
+  }
+
+  if (el.hasGlow) {
+    const blur = el.glowBlur ?? 8;
+    const opacity = el.glowOpacity ?? 1;
+    let col = el.glowColor || '#06B6D4';
+    if (col.startsWith('#') && col.length === 7) {
+      const r = parseInt(col.slice(1, 3), 16);
+      const g = parseInt(col.slice(3, 5), 16);
+      const b = parseInt(col.slice(5, 7), 16);
+      col = `rgba(${r}, ${g}, ${b}, ${opacity})`;
+    }
+    boxShadows.push(`0 0 ${blur}px ${col}`);
+  }
+
   return {
     left: `${el.x * props.scale}px`,
     top: `${el.y * props.scale}px`,
@@ -85,6 +125,7 @@ const transformStyle = computed(() => {
     transformOrigin: 'center center',
     zIndex: el.zIndex || 1,
     opacity: el.opacity !== undefined ? el.opacity : 1,
+    boxShadow: boxShadows.length ? boxShadows.join(', ') : undefined,
     display: el.hidden ? 'none' : 'block'
   };
 });
@@ -179,7 +220,19 @@ function handleResize(e: MouseEvent, handle: HandleType) {
           @click.stop
         ></textarea>
         <template v-else>
-          {{ props.element.text || 'Double-click to edit text...' }}
+          <div v-if="props.element.listStyle && props.element.listStyle !== 'none'" class="w-full flex flex-col gap-0.5">
+            <div
+              v-for="(line, idx) in textLines"
+              :key="idx"
+              class="flex items-start gap-1.5"
+            >
+              <span class="opacity-80 font-mono shrink-0 select-none text-[0.9em]">{{ getListPrefix(idx, props.element.listStyle) }}</span>
+              <span class="flex-1">{{ line }}</span>
+            </div>
+          </div>
+          <template v-else>
+            {{ props.element.text || 'Double-click to edit text...' }}
+          </template>
         </template>
       </div>
 
@@ -207,7 +260,7 @@ function handleResize(e: MouseEvent, handle: HandleType) {
           v-if="!props.element.bgImageUrl && !props.element.fgImageUrl"
           class="text-slate-500 font-mono text-[9px] flex flex-col items-center justify-center gap-1 p-2 text-center"
         >
-          <span class="text-xl">🖼️</span>
+          <i class="ri-image-2-line text-2xl text-slate-400"></i>
           <span>{{ props.element.borderStyle === 'none' ? 'Invisible Frame' : 'Image Frame' }}</span>
         </div>
       </div>
@@ -221,9 +274,7 @@ function handleResize(e: MouseEvent, handle: HandleType) {
           color: props.element.iconColor || '#F59E0B'
         }"
       >
-        <i v-if="props.element.iconCssClass" :class="props.element.iconCssClass" class="leading-none"></i>
-        <i v-else-if="getRemixIconClass(props.element.iconGlyph)" :class="getRemixIconClass(props.element.iconGlyph)" class="leading-none text-amber-400"></i>
-        <span v-else>{{ props.element.iconGlyph || '⚔️' }}</span>
+        <i :class="['leading-none', props.element.iconCssClass || getRemixIconClass(props.element.iconGlyph, 'ri-sword-line')]"></i>
       </div>
 
       <!-- 4. Shape & Placeholder Box Element -->
@@ -254,8 +305,7 @@ function handleResize(e: MouseEvent, handle: HandleType) {
             class="w-full h-full flex flex-col items-center justify-center p-2 relative z-10 animate-fade-in"
             :style="{ backgroundColor: props.element.flippedColor || 'rgba(245, 158, 11, 0.15)' }"
           >
-            <i v-if="props.element.flippedIcon && getRemixIconClass(props.element.flippedIcon)" :class="[getRemixIconClass(props.element.flippedIcon), 'text-2xl mb-1 filter drop-shadow']"></i>
-            <span v-else class="text-2xl mb-1 filter drop-shadow">{{ props.element.flippedIcon || '✨' }}</span>
+            <i :class="[getRemixIconClass(props.element.flippedIcon, 'ri-sparkling-fill'), 'text-2xl mb-1 filter drop-shadow']"></i>
             <span
               class="font-bold uppercase tracking-wider font-display truncate max-w-full"
               :style="{
@@ -281,9 +331,7 @@ function handleResize(e: MouseEvent, handle: HandleType) {
         <template v-else>
           <!-- Hex Exploration Tile Default State -->
           <div v-if="props.element.shapeType === 'hex'" class="flex flex-col items-center justify-center p-1.5 z-10 w-full h-full" @dblclick.stop="startEditing('placeholderLabel', $event)">
-            <i v-if="props.element.iconCssClass" :class="[props.element.iconCssClass, 'text-2xl filter drop-shadow']"></i>
-            <i v-else-if="getRemixIconClass(props.element.iconGlyph)" :class="[getRemixIconClass(props.element.iconGlyph), 'text-2xl filter drop-shadow']"></i>
-            <span v-else class="text-2xl filter drop-shadow">{{ props.element.iconGlyph || '🌫️' }}</span>
+            <i :class="['text-2xl filter drop-shadow', props.element.iconCssClass || getRemixIconClass(props.element.iconGlyph, 'ri-foggy-line')]"></i>
             <input
               v-if="isEditing && editField === 'placeholderLabel'"
               ref="textInputRef"

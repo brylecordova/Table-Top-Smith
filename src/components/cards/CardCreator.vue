@@ -7,13 +7,76 @@ import {
   activeCardGroup,
   activeCard,
   saveCardGroup,
-  showToast
+  showToast,
+  createCardGroup,
+  renameCardGroup,
+  deleteCardGroup,
+  addCardToGroup,
+  deleteCard
 } from '../../stores/projectStore.ts';
 import {
   recordSnapshot,
   performUndo,
   performRedo
 } from '../../stores/historyStore.ts';
+
+const showCreateGroupModal = ref(false);
+const newGroupName = ref('');
+const newGroupSize = ref<'poker' | 'bridge' | 'tarot' | 'mini'>('poker');
+
+const showRenameGroupModal = ref(false);
+const renameGroupName = ref('');
+
+function openCreateGroup() {
+  newGroupName.value = `Deck ${cardGroups.value.length + 1}`;
+  newGroupSize.value = 'poker';
+  showCreateGroupModal.value = true;
+}
+
+async function confirmCreateGroup() {
+  if (!newGroupName.value.trim()) return;
+  const sizeMap = {
+    poker: { width: 63.5, height: 88.9, cornerRadius: 3 },
+    bridge: { width: 57, height: 88.9, cornerRadius: 3 },
+    tarot: { width: 70, height: 120, cornerRadius: 4 },
+    mini: { width: 44, height: 67, cornerRadius: 2.5 }
+  };
+  await createCardGroup(newGroupName.value.trim(), sizeMap[newGroupSize.value]);
+  showCreateGroupModal.value = false;
+}
+
+function openRenameGroup() {
+  if (!activeCardGroup.value) return;
+  renameGroupName.value = activeCardGroup.value.name;
+  showRenameGroupModal.value = true;
+}
+
+async function confirmRenameGroup() {
+  if (!activeCardGroup.value || !renameGroupName.value.trim()) return;
+  await renameCardGroup(activeCardGroup.value._id, renameGroupName.value.trim());
+  showRenameGroupModal.value = false;
+}
+
+async function confirmDeleteGroup() {
+  if (!activeCardGroup.value) return;
+  if (confirm(`Are you sure you want to delete card group "${activeCardGroup.value.name}" and all its cards?`)) {
+    await deleteCardGroup(activeCardGroup.value._id);
+  }
+}
+
+async function handleAddNewCard() {
+  if (!activeCardGroup.value) return;
+  await addCardToGroup(activeCardGroup.value._id);
+}
+
+async function handleDeleteCard(cardId: string) {
+  if (!activeCardGroup.value) return;
+  if (activeCardGroup.value.cards.length <= 1) {
+    showToast('A card group must have at least one card.');
+    return;
+  }
+  await deleteCard(activeCardGroup.value._id, cardId);
+}
 
 import type { CardItem, CardGroup, CanvasElement, TabletopIcon, AssetItem, ShapeType, PlaceholderPreset } from '../../types/index.ts';
 import { getRemixIconClass } from '../../utils/iconHelper.ts';
@@ -751,22 +814,59 @@ watch(activeCard, () => {
 <template>
   <div class="flex-1 flex overflow-hidden">
     <!-- Sub-Sidebar: Card Groups & Card List -->
-    <aside class="w-60 border-r border-slate-800 bg-[#0F172A]/70 flex flex-col shrink-0 select-none">
-      <div class="p-3 border-b border-slate-800">
-        <span class="text-xs font-semibold text-slate-300 font-display uppercase tracking-wider block mb-1.5">Card Group</span>
+    <aside class="w-64 border-r border-slate-800 bg-[#0F172A]/80 flex flex-col shrink-0 select-none">
+      <!-- Card Group Section -->
+      <div class="p-3 border-b border-slate-800 space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold text-slate-300 font-display uppercase tracking-wider">Card Group</span>
+          <div class="flex items-center gap-1">
+            <button
+              @click="openCreateGroup"
+              class="p-1 hover:bg-slate-800 rounded text-amber-400 hover:text-amber-300 transition-colors cursor-pointer"
+              title="Create New Card Group"
+            >
+              <i class="ri-folder-add-line text-sm"></i>
+            </button>
+            <button
+              @click="openRenameGroup"
+              class="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white transition-colors cursor-pointer"
+              title="Rename Current Card Group"
+            >
+              <i class="ri-edit-line text-sm"></i>
+            </button>
+            <button
+              @click="confirmDeleteGroup"
+              class="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-red-400 transition-colors cursor-pointer"
+              title="Delete Current Card Group"
+            >
+              <i class="ri-delete-bin-line text-sm"></i>
+            </button>
+          </div>
+        </div>
+
         <select
           v-model="selectedGroupId"
           class="w-full bg-[#1E293B] border border-slate-700 rounded px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-amber-400"
         >
           <option v-for="grp in cardGroups" :key="grp._id" :value="grp._id">
-            {{ grp.name }} ({{ grp.cards.length }})
+            {{ grp.name }} ({{ grp.cards.length }} cards)
           </option>
         </select>
       </div>
 
-      <!-- Cards in Group List -->
-      <div class="flex items-center justify-between px-3 py-2 border-b border-slate-800/80 bg-slate-900/40">
+      <!-- Cards in Group List Header -->
+      <div class="flex items-center justify-between px-3 py-2 border-b border-slate-800/80 bg-slate-900/60">
         <span class="text-xs text-slate-400 font-mono">Cards ({{ activeCardGroup?.cards.length || 0 }})</span>
+
+        <!-- Explicit "Add New Card" Action attached directly to group -->
+        <button
+          @click="handleAddNewCard"
+          class="px-2 py-0.5 rounded bg-amber-400/15 hover:bg-amber-400/25 border border-amber-400/30 text-amber-300 hover:text-white text-[11px] font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+          title="Add New Card to this group"
+        >
+          <i class="ri-add-line text-xs font-bold"></i>
+          <span>Add Card</span>
+        </button>
       </div>
 
       <div class="flex-1 overflow-y-auto p-2 space-y-1">
@@ -774,7 +874,7 @@ watch(activeCard, () => {
           v-for="card in activeCardGroup?.cards || []"
           :key="card.id"
           @click="selectedCardId = card.id"
-          class="p-2 rounded text-xs flex items-center justify-between cursor-pointer transition-colors"
+          class="group p-2 rounded text-xs flex items-center justify-between cursor-pointer transition-colors"
           :class="selectedCardId === card.id
             ? 'bg-amber-500/15 border border-amber-500/40 text-amber-200'
             : 'hover:bg-slate-800/60 text-slate-300 border border-transparent'"
@@ -786,8 +886,26 @@ watch(activeCard, () => {
               <div class="text-[10px] text-slate-500 truncate">{{ card.type }} · Cost {{ card.cost }}</div>
             </div>
           </div>
-          <span class="text-[10px] text-slate-500 font-mono shrink-0 ml-1">×{{ card.quantity }}</span>
+
+          <div class="flex items-center gap-1 shrink-0 ml-1">
+            <span class="text-[10px] text-slate-500 font-mono">×{{ card.quantity }}</span>
+            <button
+              @click.stop="handleDeleteCard(card.id)"
+              class="opacity-0 group-hover:opacity-100 p-0.5 hover:text-red-400 text-slate-500 transition-opacity cursor-pointer"
+              title="Delete Card"
+            >
+              <i class="ri-close-line text-xs"></i>
+            </button>
+          </div>
         </div>
+
+        <button
+          @click="handleAddNewCard"
+          class="w-full mt-2 py-2 border border-dashed border-slate-700 hover:border-amber-400/60 rounded-lg text-slate-400 hover:text-amber-300 text-xs font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer bg-slate-900/30 hover:bg-amber-500/5"
+        >
+          <i class="ri-add-circle-line text-sm"></i>
+          <span>Add New Card</span>
+        </button>
       </div>
     </aside>
 
@@ -974,5 +1092,144 @@ watch(activeCard, () => {
       @select-inline="handleInsertInlineIcon"
       @select-portrait="handleSetPortraitIcon"
     />
+
+    <!-- Create Card Group Modal -->
+    <div
+      v-if="showCreateGroupModal"
+      class="fixed inset-0 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 z-50 select-none animate-in fade-in duration-100"
+    >
+      <div class="bg-slate-900 border border-slate-700 rounded-xl max-w-md w-full p-5 shadow-2xl space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+          <div class="flex items-center gap-2">
+            <i class="ri-folder-add-line text-amber-400 text-lg"></i>
+            <h3 class="text-sm font-bold text-white font-display">Create New Card Group</h3>
+          </div>
+          <button @click="showCreateGroupModal = false" class="text-slate-400 hover:text-white cursor-pointer">
+            <i class="ri-close-line text-lg"></i>
+          </button>
+        </div>
+
+        <div class="space-y-3 text-xs">
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-300 mb-1">Group Name *</label>
+            <input
+              v-model="newGroupName"
+              placeholder="e.g. Action Cards, Event Deck, Item Cards..."
+              class="w-full bg-[#0B0F17] border border-slate-700 rounded-lg px-3 py-1.5 text-white focus:outline-none focus:border-amber-400"
+              autofocus
+            />
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-300 mb-1">Standard Card Size</label>
+            <div class="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                @click="newGroupSize = 'poker'"
+                class="p-2 rounded-lg border text-left cursor-pointer transition-colors"
+                :class="newGroupSize === 'poker' ? 'bg-amber-500/15 border-amber-500/50 text-amber-200' : 'bg-slate-800/60 border-slate-700 text-slate-400 hover:text-white'"
+              >
+                <div class="font-bold text-[11px]">Poker Size</div>
+                <div class="text-[9px] opacity-75">63.5 × 88.9 mm</div>
+              </button>
+              <button
+                type="button"
+                @click="newGroupSize = 'bridge'"
+                class="p-2 rounded-lg border text-left cursor-pointer transition-colors"
+                :class="newGroupSize === 'bridge' ? 'bg-amber-500/15 border-amber-500/50 text-amber-200' : 'bg-slate-800/60 border-slate-700 text-slate-400 hover:text-white'"
+              >
+                <div class="font-bold text-[11px]">Bridge Size</div>
+                <div class="text-[9px] opacity-75">57 × 88.9 mm</div>
+              </button>
+              <button
+                type="button"
+                @click="newGroupSize = 'tarot'"
+                class="p-2 rounded-lg border text-left cursor-pointer transition-colors"
+                :class="newGroupSize === 'tarot' ? 'bg-amber-500/15 border-amber-500/50 text-amber-200' : 'bg-slate-800/60 border-slate-700 text-slate-400 hover:text-white'"
+              >
+                <div class="font-bold text-[11px]">Tarot Size</div>
+                <div class="text-[9px] opacity-75">70 × 120 mm</div>
+              </button>
+              <button
+                type="button"
+                @click="newGroupSize = 'mini'"
+                class="p-2 rounded-lg border text-left cursor-pointer transition-colors"
+                :class="newGroupSize === 'mini' ? 'bg-amber-500/15 border-amber-500/50 text-amber-200' : 'bg-slate-800/60 border-slate-700 text-slate-400 hover:text-white'"
+              >
+                <div class="font-bold text-[11px]">Mini Size</div>
+                <div class="text-[9px] opacity-75">44 × 67 mm</div>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="pt-3 border-t border-slate-800 flex justify-end gap-2 text-xs">
+          <button
+            type="button"
+            @click="showCreateGroupModal = false"
+            class="px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            @click="confirmCreateGroup"
+            :disabled="!newGroupName.trim()"
+            class="px-4 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 disabled:opacity-50 text-slate-950 font-bold transition-colors cursor-pointer"
+          >
+            Create Group
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rename Card Group Modal -->
+    <div
+      v-if="showRenameGroupModal"
+      class="fixed inset-0 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 z-50 select-none animate-in fade-in duration-100"
+    >
+      <div class="bg-slate-900 border border-slate-700 rounded-xl max-w-sm w-full p-5 shadow-2xl space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+          <div class="flex items-center gap-2">
+            <i class="ri-edit-line text-amber-400 text-lg"></i>
+            <h3 class="text-sm font-bold text-white font-display">Rename Card Group</h3>
+          </div>
+          <button @click="showRenameGroupModal = false" class="text-slate-400 hover:text-white cursor-pointer">
+            <i class="ri-close-line text-lg"></i>
+          </button>
+        </div>
+
+        <div class="space-y-3 text-xs">
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-300 mb-1">New Display Label *</label>
+            <input
+              v-model="renameGroupName"
+              placeholder="e.g. Action Cards..."
+              class="w-full bg-[#0B0F17] border border-slate-700 rounded-lg px-3 py-1.5 text-white focus:outline-none focus:border-amber-400"
+              autofocus
+              @keydown.enter="confirmRenameGroup"
+            />
+          </div>
+        </div>
+
+        <div class="pt-3 border-t border-slate-800 flex justify-end gap-2 text-xs">
+          <button
+            type="button"
+            @click="showRenameGroupModal = false"
+            class="px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            @click="confirmRenameGroup"
+            :disabled="!renameGroupName.trim()"
+            class="px-4 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 disabled:opacity-50 text-slate-950 font-bold transition-colors cursor-pointer"
+          >
+            Save Name
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>

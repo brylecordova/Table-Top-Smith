@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { project, isSaving, activeTool, isAssetSidebarOpen, showToast } from '../../stores/projectStore.ts';
+import { project, isSaving, activeTool, isAssetSidebarOpen, showToast, returnToMainMenu } from '../../stores/projectStore.ts';
 
 function handleExportProduction() {
   activeTool.value = 'print';
@@ -8,16 +8,31 @@ function handleExportProduction() {
 </script>
 
 <template>
-  <header class="flex items-center justify-between gap-8 px-6 py-3 border-b border-slate-800 bg-[#0B0F17] shrink-0 z-30">
-    <!-- Zone 1: Brand wordmark -->
+  <header class="flex items-center justify-between gap-4 px-6 py-2.5 border-b border-slate-800 bg-[#0B0F17] shrink-0 z-30 select-none">
+    <!-- Zone 1: Main Menu Return & Brand wordmark -->
     <div class="flex items-center gap-3 shrink-0">
-      <div class="w-7 h-7 rounded bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 font-bold text-sm">
-        TS
+      <button
+        @click="returnToMainMenu"
+        class="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 hover:border-amber-400/50 text-slate-300 hover:text-white flex items-center gap-1.5 text-xs font-semibold transition-all shadow-sm cursor-pointer"
+        title="Save & Return to Main Menu"
+      >
+        <i class="ri-home-4-line text-amber-400 text-sm"></i>
+        <span>Main Menu</span>
+      </button>
+
+      <div class="h-4 w-px bg-slate-800"></div>
+
+      <div class="flex items-center gap-2">
+        <div class="w-6 h-6 rounded bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 font-bold text-xs">
+          TS
+        </div>
+        <span class="text-sm font-bold tracking-tight text-white font-display whitespace-nowrap">
+          TableSmith
+        </span>
+        <span class="text-xs text-slate-400 font-mono hidden md:inline-block max-w-[200px] truncate">
+          / {{ project.name }}
+        </span>
       </div>
-      <a href="#" class="text-base font-bold tracking-tight text-white font-display whitespace-nowrap">
-        TableSmith Studio
-      </a>
-      <span class="text-xs text-slate-500 font-mono hidden md:inline-block">/ {{ project.name }}</span>
     </div>
 
     <!-- Zone 2: Clean single-line nav links -->

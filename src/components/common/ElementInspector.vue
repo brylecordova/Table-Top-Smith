@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import type { CanvasElement } from '../../types/index.ts';
+import AdvancedColorPicker from './AdvancedColorPicker.vue';
+import { getRemixIconClass } from '../../utils/iconHelper.ts';
 
 const props = defineProps<{
   element: CanvasElement | null;
@@ -10,12 +12,19 @@ const emit = defineEmits<{
   (e: 'open-icons'): void;
 }>();
 
-const fontOptions = [
-  { label: 'Public Sans (Neutral UI)', val: 'Public Sans' },
-  { label: 'Outfit (Geometric Display)', val: 'Outfit' },
-  { label: 'Cinzel (Fantasy / Medieval)', val: 'Cinzel' },
-  { label: 'Source Serif (Classic Rulebook)', val: 'Source Serif 4' },
-  { label: 'JetBrains Mono (Stats & Math)', val: 'JetBrains Mono' }
+// 40+ Font Families organized into Formal / Professional and Playful / Creative
+const formalFonts = [
+  'Inter', 'Roboto', 'Open Sans', 'Lato', 'Montserrat',
+  'Poppins', 'Arial', 'Helvetica', 'Times New Roman', 'Georgia',
+  'EB Garamond', 'Cambria', 'Merriweather', 'Playfair Display', 'Source Sans 3',
+  'Raleway', 'Nunito', 'Oswald', 'Work Sans', 'Fira Sans', 'Public Sans', 'Outfit'
+];
+
+const playfulFonts = [
+  'Comic Sans MS', 'Comic Neue', 'Fredoka', 'Quicksand', 'Patrick Hand',
+  'Pacifico', 'Caveat', 'Baloo 2', 'Chicle', 'Chewy',
+  'Titan One', 'Bangers', 'Luckiest Guy', 'Bubblegum Sans', 'Sniglet',
+  'Permanent Marker', 'Amatic SC', 'Lobster', 'Comfortaa', 'Crafty Girls'
 ];
 
 const sampleBackgrounds = [
@@ -30,6 +39,59 @@ function notifyChange() {
     emit('change', props.element);
   }
 }
+
+function getBackgroundAlpha(colorStr?: string): number {
+  if (!colorStr || colorStr === 'transparent') return 0;
+  const str = colorStr.trim();
+  if (str.startsWith('rgba')) {
+    const parts = str.match(/[\d.]+/g);
+    if (parts && parts.length >= 4) {
+      return Math.round(parseFloat(parts[3]) * 100);
+    }
+  } else if (str.startsWith('#')) {
+    let hex = str.slice(1);
+    if (hex.length === 8) {
+      const a = parseInt(hex.slice(6, 8), 16) / 255;
+      return Math.round(a * 100);
+    }
+    return 100;
+  }
+  return 100;
+}
+
+function handleTextBgAlphaChange(e: Event) {
+  if (!props.element) return;
+  const val = parseInt((e.target as HTMLInputElement).value, 10);
+  if (val <= 0) {
+    props.element.textBackgroundColor = 'transparent';
+    props.element.textHasBackground = false;
+  } else {
+    props.element.textHasBackground = true;
+    const a = +(val / 100).toFixed(2);
+    let r = 15, g = 23, b = 42; // default dark slate
+    const current = props.element.textBackgroundColor;
+    if (current && current !== 'transparent') {
+      if (current.startsWith('rgb')) {
+        const parts = current.match(/[\d.]+/g);
+        if (parts && parts.length >= 3) {
+          r = parseInt(parts[0], 10);
+          g = parseInt(parts[1], 10);
+          b = parseInt(parts[2], 10);
+        }
+      } else if (current.startsWith('#')) {
+        let hex = current.slice(1);
+        if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+        if (hex.length >= 6) {
+          r = parseInt(hex.slice(0, 2), 16) || 0;
+          g = parseInt(hex.slice(2, 4), 16) || 0;
+          b = parseInt(hex.slice(4, 6), 16) || 0;
+        }
+      }
+    }
+    props.element.textBackgroundColor = `rgba(${r}, ${g}, ${b}, ${a})`;
+  }
+  notifyChange();
+}
 </script>
 
 <template>
@@ -38,7 +100,7 @@ function notifyChange() {
     <div class="flex items-center justify-between border-b border-slate-800 pb-2">
       <div class="flex items-center gap-1.5 font-semibold text-slate-200 font-display">
         <i
-          :class="props.element.type === 'text' ? 'ri-text' : props.element.type === 'image-frame' ? 'ri-image-2-line' : 'ri-sparkling-line'"
+          :class="props.element.type === 'text' ? 'ri-text' : props.element.type === 'image-frame' ? 'ri-image-2-line' : props.element.type === 'shape' ? 'ri-shape-line' : 'ri-sparkling-line'"
           class="text-amber-400 text-sm"
         ></i>
         <span class="capitalize">{{ props.element.name || props.element.type }}</span>
@@ -64,7 +126,7 @@ function notifyChange() {
       </div>
     </div>
 
-    <!-- Transform Coordinates -->
+    <!-- Position & Size Coordinates -->
     <div class="space-y-2">
       <span class="text-[10px] text-slate-500 font-mono uppercase tracking-wider">Position & Size</span>
       <div class="grid grid-cols-4 gap-1.5 font-mono text-[11px]">
@@ -117,12 +179,12 @@ function notifyChange() {
           />
         </div>
         <div>
-          <span class="text-[9px] text-slate-500">Opacity ({{ Math.round((props.element.opacity || 1) * 100) }}%)</span>
+          <span class="text-[9px] text-slate-500">Opacity ({{ Math.round((props.element.opacity ?? 1) * 100) }}%)</span>
           <input
             type="range"
             min="0"
             max="1"
-            step="0.05"
+            step="0.01"
             v-model.number="props.element.opacity"
             @input="notifyChange"
             class="w-full mt-1 accent-amber-400 cursor-pointer"
@@ -131,21 +193,37 @@ function notifyChange() {
       </div>
     </div>
 
-    <!-- SPECIFIC CONTROLS: TEXT BOX -->
+    <!-- ========================================== -->
+    <!-- 1. TEXT ELEMENT CONTROLS                   -->
+    <!-- ========================================== -->
     <div v-if="props.element.type === 'text'" class="border-t border-slate-800 pt-3 space-y-3">
-      <span class="text-[10px] text-slate-500 font-mono uppercase tracking-wider">Typography & Text</span>
+      <span class="text-[10px] text-slate-500 font-mono uppercase tracking-wider flex items-center gap-1.5">
+        <i class="ri-text text-amber-400 text-sm"></i>
+        Typography & Text
+      </span>
 
+      <!-- Font Family (40+ Fonts grouped into Formal & Playful) -->
       <div>
         <span class="text-[10px] text-slate-500 font-mono">Font Family</span>
         <select
           v-model="props.element.fontFamily"
           @change="notifyChange"
-          class="w-full bg-[#1E293B] border border-slate-700 rounded px-2 py-1 text-xs text-white mt-0.5"
+          class="w-full bg-[#1E293B] border border-slate-700 rounded px-2 py-1 text-xs text-white mt-0.5 font-sans"
         >
-          <option v-for="f in fontOptions" :key="f.val" :value="f.val">{{ f.label }}</option>
+          <optgroup label="Formal / Professional (20+)">
+            <option v-for="f in formalFonts" :key="f" :value="f" :style="{ fontFamily: f }">
+              {{ f }}
+            </option>
+          </optgroup>
+          <optgroup label="Playful / Creative (20+)">
+            <option v-for="f in playfulFonts" :key="f" :value="f" :style="{ fontFamily: f }">
+              {{ f }}
+            </option>
+          </optgroup>
         </select>
       </div>
 
+      <!-- Font Size & Weight -->
       <div class="grid grid-cols-2 gap-2">
         <div>
           <span class="text-[10px] text-slate-500 font-mono">Font Size (pt)</span>
@@ -155,7 +233,7 @@ function notifyChange() {
             max="96"
             v-model.number="props.element.fontSize"
             @input="notifyChange"
-            class="w-full bg-[#1E293B] border border-slate-700 rounded px-2 py-1 text-xs text-white font-mono"
+            class="w-full bg-[#1E293B] border border-slate-700 rounded px-2 py-1 text-xs text-white font-mono mt-0.5"
           />
         </div>
         <div>
@@ -163,7 +241,7 @@ function notifyChange() {
           <select
             v-model.number="props.element.fontWeight"
             @change="notifyChange"
-            class="w-full bg-[#1E293B] border border-slate-700 rounded px-2 py-1 text-xs text-white"
+            class="w-full bg-[#1E293B] border border-slate-700 rounded px-2 py-1 text-xs text-white mt-0.5"
           >
             <option :value="300">Light (300)</option>
             <option :value="400">Regular (400)</option>
@@ -174,263 +252,166 @@ function notifyChange() {
         </div>
       </div>
 
-      <div class="grid grid-cols-2 gap-2">
-        <div>
-          <span class="text-[10px] text-slate-500 font-mono">Horizontal Align</span>
-          <select
-            v-model="props.element.textAlign"
-            @change="notifyChange"
-            class="w-full bg-[#1E293B] border border-slate-700 rounded px-1.5 py-1 text-xs text-white"
+      <!-- Microsoft Word Style Horizontal Alignment Buttons -->
+      <div class="space-y-1">
+        <span class="text-[10px] text-slate-500 font-mono">Horizontal Alignment</span>
+        <div class="flex items-center bg-[#1E293B] border border-slate-700 rounded p-0.5 gap-0.5">
+          <button
+            type="button"
+            @click="props.element.textAlign = 'left'; notifyChange()"
+            class="flex-1 py-1 rounded text-center transition-colors cursor-pointer"
+            :class="props.element.textAlign === 'left' || !props.element.textAlign ? 'bg-amber-400 text-slate-950 font-bold shadow-xs' : 'text-slate-400 hover:text-white hover:bg-slate-800'"
+            title="Align Left"
           >
-            <option value="left">Left</option>
-            <option value="center">Center</option>
-            <option value="right">Right</option>
-            <option value="justify">Justify</option>
-          </select>
-        </div>
-        <div>
-          <span class="text-[10px] text-slate-500 font-mono">Vertical Align</span>
-          <select
-            v-model="props.element.verticalAlign"
-            @change="notifyChange"
-            class="w-full bg-[#1E293B] border border-slate-700 rounded px-1.5 py-1 text-xs text-white"
+            <i class="ri-align-left text-sm leading-none"></i>
+          </button>
+          <button
+            type="button"
+            @click="props.element.textAlign = 'center'; notifyChange()"
+            class="flex-1 py-1 rounded text-center transition-colors cursor-pointer"
+            :class="props.element.textAlign === 'center' ? 'bg-amber-400 text-slate-950 font-bold shadow-xs' : 'text-slate-400 hover:text-white hover:bg-slate-800'"
+            title="Align Center"
           >
-            <option value="top">Top</option>
-            <option value="middle">Middle / Center</option>
-            <option value="bottom">Bottom</option>
-          </select>
+            <i class="ri-align-center text-sm leading-none"></i>
+          </button>
+          <button
+            type="button"
+            @click="props.element.textAlign = 'right'; notifyChange()"
+            class="flex-1 py-1 rounded text-center transition-colors cursor-pointer"
+            :class="props.element.textAlign === 'right' ? 'bg-amber-400 text-slate-950 font-bold shadow-xs' : 'text-slate-400 hover:text-white hover:bg-slate-800'"
+            title="Align Right"
+          >
+            <i class="ri-align-right text-sm leading-none"></i>
+          </button>
+          <button
+            type="button"
+            @click="props.element.textAlign = 'justify'; notifyChange()"
+            class="flex-1 py-1 rounded text-center transition-colors cursor-pointer"
+            :class="props.element.textAlign === 'justify' ? 'bg-amber-400 text-slate-950 font-bold shadow-xs' : 'text-slate-400 hover:text-white hover:bg-slate-800'"
+            title="Justify"
+          >
+            <i class="ri-align-justify text-sm leading-none"></i>
+          </button>
         </div>
       </div>
 
+      <!-- Microsoft Word Style Vertical Alignment Buttons -->
+      <div class="space-y-1">
+        <span class="text-[10px] text-slate-500 font-mono">Vertical Alignment</span>
+        <div class="flex items-center bg-[#1E293B] border border-slate-700 rounded p-0.5 gap-0.5">
+          <button
+            type="button"
+            @click="props.element.verticalAlign = 'top'; notifyChange()"
+            class="flex-1 py-1 rounded text-center transition-colors cursor-pointer"
+            :class="props.element.verticalAlign === 'top' || !props.element.verticalAlign ? 'bg-amber-400 text-slate-950 font-bold shadow-xs' : 'text-slate-400 hover:text-white hover:bg-slate-800'"
+            title="Align Top"
+          >
+            <i class="ri-align-top text-sm leading-none"></i>
+          </button>
+          <button
+            type="button"
+            @click="props.element.verticalAlign = 'middle'; notifyChange()"
+            class="flex-1 py-1 rounded text-center transition-colors cursor-pointer"
+            :class="props.element.verticalAlign === 'middle' ? 'bg-amber-400 text-slate-950 font-bold shadow-xs' : 'text-slate-400 hover:text-white hover:bg-slate-800'"
+            title="Align Middle"
+          >
+            <i class="ri-align-vertically text-sm leading-none"></i>
+          </button>
+          <button
+            type="button"
+            @click="props.element.verticalAlign = 'bottom'; notifyChange()"
+            class="flex-1 py-1 rounded text-center transition-colors cursor-pointer"
+            :class="props.element.verticalAlign === 'bottom' ? 'bg-amber-400 text-slate-950 font-bold shadow-xs' : 'text-slate-400 hover:text-white hover:bg-slate-800'"
+            title="Align Bottom"
+          >
+            <i class="ri-align-bottom text-sm leading-none"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Text Formatting Controls (Dropdown Menu) -->
+      <div class="space-y-1">
+        <span class="text-[10px] text-slate-500 font-mono">List Format</span>
+        <select
+          v-model="props.element.listStyle"
+          @change="notifyChange"
+          class="w-full bg-[#1E293B] border border-slate-700 rounded px-2 py-1.5 text-xs text-white mt-0.5 font-sans cursor-pointer focus:outline-none focus:border-amber-400"
+        >
+          <option value="none">None (Standard block/inline text)</option>
+          <option value="disc">Unordered List (Bullets)</option>
+          <option value="decimal">Ordered List (Numbers)</option>
+        </select>
+      </div>
+
+      <!-- Font Style & Text Color with Advanced Color Picker -->
       <div class="grid grid-cols-2 gap-2">
         <div>
           <span class="text-[10px] text-slate-500 font-mono">Font Style</span>
           <select
             v-model="props.element.fontStyle"
             @change="notifyChange"
-            class="w-full bg-[#1E293B] border border-slate-700 rounded px-1.5 py-1 text-xs text-white"
+            class="w-full bg-[#1E293B] border border-slate-700 rounded px-1.5 py-1 text-xs text-white mt-0.5"
           >
             <option value="normal">Normal</option>
             <option value="italic">Italic</option>
           </select>
         </div>
         <div>
-          <span class="text-[10px] text-slate-500 font-mono">Text Color</span>
-          <input
-            type="color"
+          <span class="text-[10px] text-slate-500 font-mono block mb-0.5">Text Color</span>
+          <AdvancedColorPicker
             v-model="props.element.color"
-            @input="notifyChange"
-            class="w-full h-7 rounded bg-transparent cursor-pointer border border-slate-700"
+            @change="notifyChange"
+            :showAlpha="true"
           />
         </div>
       </div>
 
-      <!-- Text Container Background / Fill Option -->
-      <div class="p-2 bg-slate-900/80 border border-slate-800 rounded-lg space-y-1.5">
+      <!-- Text Container Background Transparency / Opacity Slider (0 - 100%) -->
+      <div class="p-2.5 bg-slate-900/80 border border-slate-800 rounded-lg space-y-2">
         <div class="flex items-center justify-between">
-          <span class="text-[10px] text-slate-400 font-mono">Background</span>
-          <button
-            @click="props.element.textHasBackground = !props.element.textHasBackground; if (!props.element.textHasBackground) props.element.textBackgroundColor = 'transparent'; notifyChange()"
-            class="px-2 py-0.5 rounded text-[10px] font-mono border cursor-pointer"
-            :class="props.element.textHasBackground === false || props.element.textBackgroundColor === 'transparent'
-              ? 'bg-slate-800 text-slate-300 border-slate-700'
-              : 'bg-amber-400/20 text-amber-300 border-amber-400/40'"
-          >
-            {{ props.element.textHasBackground === false || props.element.textBackgroundColor === 'transparent' ? 'Transparent' : 'Filled' }}
-          </button>
+          <span class="text-[10px] text-slate-400 font-mono">Background Fill</span>
+          <div class="flex items-center gap-1.5">
+            <span class="text-[10px] text-amber-400 font-mono font-semibold">
+              {{ getBackgroundAlpha(props.element.textBackgroundColor) }}%
+            </span>
+            <span class="text-[9px] text-slate-500 font-mono">
+              ({{ getBackgroundAlpha(props.element.textBackgroundColor) === 0 ? 'Transparent' : getBackgroundAlpha(props.element.textBackgroundColor) === 100 ? 'Opaque' : 'Tinted' }})
+            </span>
+          </div>
         </div>
-        <div v-if="props.element.textHasBackground !== false && props.element.textBackgroundColor !== 'transparent'" class="flex items-center gap-2 pt-1">
-          <span class="text-[9px] text-slate-500 font-mono">Fill Color:</span>
-          <input
-            type="color"
+
+        <input
+          type="range"
+          min="0"
+          max="100"
+          step="1"
+          :value="getBackgroundAlpha(props.element.textBackgroundColor)"
+          @input="handleTextBgAlphaChange"
+          class="w-full accent-amber-400 cursor-pointer"
+          title="Background Fill Transparency (0 = Fully Transparent, 100 = Fully Opaque)"
+        />
+
+        <div class="flex items-center justify-between pt-1 border-t border-slate-800/60">
+          <span class="text-[9px] text-slate-500 font-mono">Fill Color Tint:</span>
+          <AdvancedColorPicker
             v-model="props.element.textBackgroundColor"
-            @input="notifyChange"
-            class="flex-1 h-6 rounded bg-transparent cursor-pointer border border-slate-700"
+            @change="notifyChange"
+            :showAlpha="true"
           />
         </div>
       </div>
-
-      <label class="flex items-center gap-2 text-xs text-slate-300 cursor-pointer pt-1">
-        <input
-          type="checkbox"
-          v-model="props.element.hasShadow"
-          @change="notifyChange"
-          class="rounded bg-slate-900 border-slate-700 text-amber-400 focus:ring-0"
-        />
-        <span>Drop Shadow</span>
-      </label>
-
-      <div>
-        <div class="flex items-center justify-between">
-          <span class="text-[10px] text-slate-500 font-mono">Content Text</span>
-          <button
-            @click="emit('open-icons')"
-            class="text-[10px] text-amber-400 hover:text-amber-300 flex items-center gap-1 font-mono cursor-pointer"
-            title="Open Full Tabletop Icon Library"
-          >
-            <i class="ri-sparkling-line text-xs"></i>
-            <span>+ Icons</span>
-          </button>
-        </div>
-
-        <!-- Quick 1-click inline icon tokens -->
-        <div class="flex items-center gap-1 my-1 overflow-x-auto pb-0.5">
-          <span class="text-[9px] text-slate-500 font-mono shrink-0">Quick Icons:</span>
-          <button
-            v-for="sym in ['⚔️', '🛡️', '❤️', '🎲', '🪙', '✨', '📜', '👑', '🏹', '🧪']"
-            :key="sym"
-            @click="props.element.text = (props.element.text || '') + (props.element.text ? ' ' : '') + sym; notifyChange()"
-            class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-xs shrink-0 transition-colors"
-            :title="`Insert ${sym} inline`"
-          >
-            {{ sym }}
-          </button>
-        </div>
-
-        <textarea
-          v-model="props.element.text"
-          @input="notifyChange"
-          rows="3"
-          placeholder="Enter text or inline icons..."
-          class="w-full bg-[#1E293B] border border-slate-700 rounded p-2 text-xs text-white font-sans mt-0.5 resize-none font-mono"
-        ></textarea>
-      </div>
     </div>
 
-    <!-- SPECIFIC CONTROLS: SECTION IMAGE FRAME -->
-    <div v-else-if="props.element.type === 'image-frame'" class="border-t border-slate-800 pt-3 space-y-3">
-      <span class="text-[10px] text-slate-500 font-mono uppercase tracking-wider">Dual-Layer Image Frame</span>
-
-      <!-- Foreground Cutout -->
-      <div>
-        <span class="text-[10px] text-slate-400 font-mono">Foreground Cutout</span>
-        <input
-          v-model="props.element.fgImageUrl"
-          @input="notifyChange"
-          placeholder="https://.../character_cutout.png"
-          class="w-full bg-[#1E293B] border border-slate-700 rounded px-2.5 py-1 text-xs text-white mt-0.5"
-        />
-      </div>
-
-      <!-- Background Texture -->
-      <div>
-        <span class="text-[10px] text-slate-400 font-mono">Background Texture</span>
-        <input
-          v-model="props.element.bgImageUrl"
-          @input="notifyChange"
-          placeholder="https://.../dark_parchment.jpg"
-          class="w-full bg-[#1E293B] border border-slate-700 rounded px-2.5 py-1 text-xs text-white mt-0.5"
-        />
-      </div>
-
-      <!-- Quick sample background presets -->
-      <div class="flex items-center gap-1 text-[10px]">
-        <span class="text-slate-500 font-mono">Presets:</span>
-        <button
-          v-for="bg in sampleBackgrounds"
-          :key="bg.label"
-          @click="props.element.bgImageUrl = bg.url; notifyChange()"
-          class="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300"
-        >
-          {{ bg.label }}
-        </button>
-      </div>
-
-      <!-- Border Adjustment (0 border = invisible box!) -->
-      <div class="border-t border-slate-800/80 pt-2 space-y-2">
-        <span class="text-[10px] font-semibold text-slate-400">Section Border & Frame Mask</span>
-
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <span class="text-[10px] text-slate-500 font-mono">Border Style</span>
-            <select
-              v-model="props.element.borderStyle"
-              @change="notifyChange"
-              class="w-full bg-[#1E293B] border border-slate-700 rounded px-2 py-1 text-xs text-white"
-            >
-              <option value="none">None (Invisible Box)</option>
-              <option value="solid">Solid Line</option>
-              <option value="dashed">Dashed Outline</option>
-            </select>
-          </div>
-          <div>
-            <span class="text-[10px] text-slate-500 font-mono">Border Width (mm)</span>
-            <input
-              type="number"
-              min="0"
-              max="10"
-              step="0.5"
-              v-model.number="props.element.borderWidth"
-              @input="notifyChange"
-              class="w-full bg-[#1E293B] border border-slate-700 rounded px-2 py-1 text-xs text-white font-mono"
-            />
-          </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <span class="text-[10px] text-slate-500 font-mono">Border Color</span>
-            <input
-              type="color"
-              v-model="props.element.borderColor"
-              @input="notifyChange"
-              class="w-full h-7 rounded bg-transparent cursor-pointer border border-slate-700"
-            />
-          </div>
-          <div>
-            <span class="text-[10px] text-slate-500 font-mono">Corner Radius (mm)</span>
-            <input
-              type="number"
-              min="0"
-              max="20"
-              v-model.number="props.element.borderRadius"
-              @input="notifyChange"
-              class="w-full bg-[#1E293B] border border-slate-700 rounded px-2 py-1 text-xs text-white font-mono"
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- SPECIFIC CONTROLS: ICON ELEMENT -->
-    <div v-else-if="props.element.type === 'icon'" class="border-t border-slate-800 pt-3 space-y-3">
-      <span class="text-[10px] text-slate-500 font-mono uppercase tracking-wider">Icon Glyph Properties</span>
-
-      <div class="flex items-center gap-3">
-        <div class="text-4xl p-2 bg-slate-900 border border-slate-800 rounded-lg flex items-center justify-center min-w-[52px] min-h-[52px]">
-          <i v-if="props.element.iconCssClass" :class="props.element.iconCssClass" class="leading-none text-amber-400"></i>
-          <span v-else>{{ props.element.iconGlyph || '⚔️' }}</span>
-        </div>
-        <div class="flex-1 space-y-1.5">
-          <button
-            @click="emit('open-icons')"
-            class="w-full py-1 text-xs rounded bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center justify-center gap-1.5 cursor-pointer"
-          >
-            <i class="ri-sparkling-line text-sm"></i>
-            Change Icon
-          </button>
-        </div>
-      </div>
-
-      <div>
-        <span class="text-[10px] text-slate-500 font-mono">Icon Tint Color</span>
-        <input
-          type="color"
-          v-model="props.element.iconColor"
-          @input="notifyChange"
-          class="w-full h-7 rounded bg-transparent cursor-pointer border border-slate-700 mt-0.5"
-        />
-      </div>
-    </div>
-
-    <!-- SPECIFIC CONTROLS: SHAPE & PLACEHOLDER BOX -->
+    <!-- ========================================== -->
+    <!-- 2. SHAPE ELEMENT CONTROLS                  -->
+    <!-- ========================================== -->
     <div v-else-if="props.element.type === 'shape'" class="border-t border-slate-800 pt-3 space-y-3">
       <span class="text-[10px] text-slate-500 font-mono uppercase tracking-wider flex items-center gap-1.5">
         <i class="ri-shape-line text-amber-400 text-sm"></i>
         Shape Controls
       </span>
 
-      <!-- Shape Geometry -->
+      <!-- Shape Geometry & Preset -->
       <div class="grid grid-cols-2 gap-2">
         <div>
           <span class="text-[10px] text-slate-400 font-mono">Shape</span>
@@ -466,6 +447,23 @@ function notifyChange() {
         </div>
       </div>
 
+      <!-- Dedicated Shape Opacity Slider (0-100%) -->
+      <div class="p-2 bg-slate-900/80 border border-slate-800 rounded-lg space-y-1">
+        <div class="flex justify-between text-[10px] text-slate-400 font-mono">
+          <span>SHAPE OPACITY</span>
+          <span>{{ Math.round((props.element.opacity ?? 1) * 100) }}%</span>
+        </div>
+        <input
+          type="range"
+          min="0"
+          max="1"
+          step="0.01"
+          v-model.number="props.element.opacity"
+          @input="notifyChange"
+          class="w-full accent-amber-400 cursor-pointer"
+        />
+      </div>
+
       <!-- Placeholder Label & Tag -->
       <div>
         <div class="flex items-center justify-between">
@@ -488,32 +486,22 @@ function notifyChange() {
         />
       </div>
 
-      <!-- Colors & Borders -->
+      <!-- Colors & Borders with Advanced Color Picker -->
       <div class="grid grid-cols-2 gap-2">
         <div>
-          <div class="flex items-center justify-between">
-            <span class="text-[10px] text-slate-500 font-mono">Fill Color</span>
-            <button
-              @click="props.element.backgroundColor = 'transparent'; notifyChange()"
-              class="text-[9px] text-slate-400 hover:text-amber-300 font-mono cursor-pointer"
-            >
-              Clear
-            </button>
-          </div>
-          <input
-            type="color"
+          <span class="text-[10px] text-slate-500 font-mono block mb-1">Fill Color</span>
+          <AdvancedColorPicker
             v-model="props.element.backgroundColor"
-            @input="notifyChange"
-            class="w-full h-7 rounded bg-transparent cursor-pointer border border-slate-700 mt-0.5"
+            @change="notifyChange"
+            :showAlpha="true"
           />
         </div>
         <div>
-          <span class="text-[10px] text-slate-500 font-mono">Border Color</span>
-          <input
-            type="color"
+          <span class="text-[10px] text-slate-500 font-mono block mb-1">Border Color</span>
+          <AdvancedColorPicker
             v-model="props.element.borderColor"
-            @input="notifyChange"
-            class="w-full h-7 rounded bg-transparent cursor-pointer border border-slate-700 mt-0.5"
+            @change="notifyChange"
+            :showAlpha="true"
           />
         </div>
       </div>
@@ -559,7 +547,7 @@ function notifyChange() {
         />
       </div>
 
-      <!-- TYPOGRAPHY & TEXT STYLING FOR HEADER / FOOTER / PLACEHOLDERS -->
+      <!-- Typography & Text Styling for Shapes/Containers -->
       <div class="border-t border-slate-800/80 pt-2 space-y-2">
         <span class="text-[10px] font-semibold text-slate-400 font-mono uppercase tracking-wider flex items-center gap-1.5">
           <i class="ri-text text-amber-400 text-sm"></i>
@@ -574,7 +562,12 @@ function notifyChange() {
               @change="notifyChange"
               class="w-full bg-[#1E293B] border border-slate-700 rounded px-1.5 py-1 text-xs text-white mt-0.5"
             >
-              <option v-for="f in fontOptions" :key="f.val" :value="f.val">{{ f.label }}</option>
+              <optgroup label="Formal / Professional (20+)">
+                <option v-for="f in formalFonts" :key="f" :value="f">{{ f }}</option>
+              </optgroup>
+              <optgroup label="Playful / Creative (20+)">
+                <option v-for="f in playfulFonts" :key="f" :value="f">{{ f }}</option>
+              </optgroup>
             </select>
           </div>
           <div>
@@ -590,18 +583,14 @@ function notifyChange() {
           </div>
         </div>
 
-        <div class="grid grid-cols-3 gap-2">
+        <div class="grid grid-cols-2 gap-2">
           <div>
-            <span class="text-[10px] text-slate-500 font-mono">Alignment</span>
-            <select
-              v-model="props.element.textAlign"
+            <span class="text-[10px] text-slate-500 font-mono block mb-1">Text Color</span>
+            <AdvancedColorPicker
+              v-model="props.element.color"
               @change="notifyChange"
-              class="w-full bg-[#1E293B] border border-slate-700 rounded px-1.5 py-1 text-xs text-white mt-0.5"
-            >
-              <option value="left">Left</option>
-              <option value="center">Center</option>
-              <option value="right">Right</option>
-            </select>
+              :showAlpha="true"
+            />
           </div>
           <div>
             <span class="text-[10px] text-slate-500 font-mono">Weight</span>
@@ -614,40 +603,6 @@ function notifyChange() {
               <option :value="600">Semi-Bold</option>
               <option :value="700">Bold</option>
             </select>
-          </div>
-          <div>
-            <span class="text-[10px] text-slate-500 font-mono">Text Color</span>
-            <input
-              type="color"
-              v-model="props.element.color"
-              @input="notifyChange"
-              class="w-full h-7 rounded bg-transparent cursor-pointer border border-slate-700 mt-0.5"
-            />
-          </div>
-        </div>
-
-        <!-- Text Bounding Box Background / Transparent Fill Option -->
-        <div class="p-2 bg-slate-900/80 border border-slate-800 rounded-lg space-y-1.5">
-          <div class="flex items-center justify-between">
-            <span class="text-[10px] text-slate-400 font-mono">Background</span>
-            <button
-              @click="props.element.textHasBackground = !props.element.textHasBackground; if (!props.element.textHasBackground) props.element.textBackgroundColor = 'transparent'; notifyChange()"
-              class="px-2 py-0.5 rounded text-[10px] font-mono border transition-colors cursor-pointer"
-              :class="props.element.textHasBackground === false || props.element.textBackgroundColor === 'transparent'
-                ? 'bg-slate-800 text-slate-300 border-slate-700'
-                : 'bg-amber-400/20 text-amber-300 border-amber-400/40'"
-            >
-              {{ props.element.textHasBackground === false || props.element.textBackgroundColor === 'transparent' ? 'Transparent' : 'Filled' }}
-            </button>
-          </div>
-          <div v-if="props.element.textHasBackground !== false && props.element.textBackgroundColor !== 'transparent'" class="flex items-center gap-2 pt-1">
-            <span class="text-[9px] text-slate-500 font-mono">Color:</span>
-            <input
-              type="color"
-              v-model="props.element.textBackgroundColor"
-              @input="notifyChange"
-              class="flex-1 h-6 rounded bg-transparent cursor-pointer border border-slate-700"
-            />
           </div>
         </div>
 
@@ -673,27 +628,24 @@ function notifyChange() {
         </div>
       </div>
 
-      <!-- Icon in Box -->
+      <!-- Icon in Shape -->
       <div class="border-t border-slate-800/80 pt-2">
-        <span class="text-[10px] text-slate-500 font-mono">Icon Glyph</span>
-        <div class="flex items-center gap-1.5 mt-0.5">
-          <input
-            v-model="props.element.iconGlyph"
-            @input="notifyChange"
-            placeholder="e.g. ⚔️"
-            class="w-12 bg-[#1E293B] border border-slate-700 rounded px-2 py-1 text-xs text-white text-center"
-          />
+        <span class="text-[10px] text-slate-500 font-mono">Icon Symbol</span>
+        <div class="flex items-center gap-2 mt-1">
+          <div class="w-8 h-8 rounded bg-[#1E293B] border border-slate-700 flex items-center justify-center text-amber-400 text-lg">
+            <i :class="props.element.iconCssClass || getRemixIconClass(props.element.iconGlyph, 'ri-sparkling-line')"></i>
+          </div>
           <button
             @click="emit('open-icons')"
-            class="py-1 px-2 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-mono flex items-center gap-1 cursor-pointer"
+            class="py-1 px-2.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-mono flex items-center gap-1.5 cursor-pointer"
           >
             <i class="ri-sparkling-line text-amber-400 text-xs"></i>
-            Pick Icon
+            Change Icon
           </button>
         </div>
       </div>
 
-      <!-- EXPLORATION TILE FLIP SETTINGS (FOR HEXAGONS & MAP TILES) -->
+      <!-- Exploration Tile Flip Settings -->
       <div v-if="props.element.shapeType === 'hex' || props.element.isFlipped !== undefined" class="border-t border-slate-800/80 pt-2 space-y-2">
         <div class="flex items-center justify-between">
           <span class="text-[10px] font-semibold text-amber-300 font-mono uppercase tracking-wider flex items-center gap-1">
@@ -721,12 +673,11 @@ function notifyChange() {
               />
             </div>
             <div>
-              <span class="text-[9px] text-slate-400 font-mono">Revealed Icon</span>
-              <input
-                v-model="props.element.flippedIcon"
-                @input="notifyChange"
-                placeholder="e.g. 🐉"
-                class="w-full bg-[#1E293B] border border-slate-700 rounded px-2 py-0.5 text-xs text-white text-center mt-0.5"
+              <span class="text-[9px] text-slate-400 font-mono block mb-1">Revealed Tint</span>
+              <AdvancedColorPicker
+                v-model="props.element.flippedColor"
+                @change="notifyChange"
+                :showAlpha="true"
               />
             </div>
           </div>
@@ -740,14 +691,224 @@ function notifyChange() {
               class="w-full bg-[#1E293B] border border-slate-700 rounded px-2 py-0.5 text-xs text-white mt-0.5"
             />
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 3. IMAGE FRAME CONTROLS                    -->
+    <!-- ========================================== -->
+    <div v-else-if="props.element.type === 'image-frame'" class="border-t border-slate-800 pt-3 space-y-3">
+      <span class="text-[10px] text-slate-500 font-mono uppercase tracking-wider flex items-center gap-1.5">
+        <i class="ri-image-2-line text-amber-400 text-sm"></i>
+        Image Frame
+      </span>
+
+      <!-- Frame Border -->
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <span class="text-[10px] text-slate-500 font-mono block mb-1">Border Color</span>
+          <AdvancedColorPicker
+            v-model="props.element.borderColor"
+            @change="notifyChange"
+            :showAlpha="true"
+          />
+        </div>
+        <div>
+          <span class="text-[10px] text-slate-500 font-mono">Border Width (mm)</span>
+          <input
+            type="number"
+            min="0"
+            max="10"
+            step="0.5"
+            v-model.number="props.element.borderWidth"
+            @input="notifyChange"
+            class="w-full bg-[#1E293B] border border-slate-700 rounded px-2 py-1 text-xs text-white font-mono mt-0.5"
+          />
+        </div>
+      </div>
+
+      <!-- Quick Background Presets -->
+      <div class="space-y-1">
+        <span class="text-[10px] text-slate-500 font-mono">Texture Preset</span>
+        <div class="grid grid-cols-2 gap-1.5">
+          <button
+            v-for="bg in sampleBackgrounds"
+            :key="bg.label"
+            type="button"
+            @click="props.element.bgImageUrl = bg.url; notifyChange()"
+            class="p-1.5 rounded border text-[10px] font-mono transition-colors text-left truncate cursor-pointer"
+            :class="props.element.bgImageUrl === bg.url ? 'bg-amber-400 text-slate-950 border-amber-500 font-bold' : 'bg-slate-900 border-slate-700 text-slate-300 hover:text-white'"
+          >
+            {{ bg.label }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 4. ICON ELEMENT CONTROLS                   -->
+    <!-- ========================================== -->
+    <div v-else-if="props.element.type === 'icon'" class="border-t border-slate-800 pt-3 space-y-3">
+      <span class="text-[10px] text-slate-500 font-mono uppercase tracking-wider flex items-center gap-1.5">
+        <i class="ri-sparkling-line text-amber-400 text-sm"></i>
+        Tabletop Icon
+      </span>
+
+      <div class="flex items-center gap-3 p-2 bg-slate-900/80 border border-slate-800 rounded-lg">
+        <div class="w-12 h-12 rounded-lg bg-slate-950 border border-slate-700 flex items-center justify-center text-amber-400 text-3xl">
+          <i :class="props.element.iconCssClass || getRemixIconClass(props.element.iconGlyph, 'ri-sword-line')"></i>
+        </div>
+        <div class="flex-1 space-y-1.5">
+          <button
+            @click="emit('open-icons')"
+            class="w-full py-1 rounded bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer"
+          >
+            <i class="ri-refresh-line text-xs"></i>
+            Change Icon
+          </button>
+          <div class="flex items-center gap-2">
+            <span class="text-[9px] text-slate-400 font-mono">Color:</span>
+            <AdvancedColorPicker
+              v-model="props.element.iconColor"
+              @change="notifyChange"
+              :showAlpha="true"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 5. UNIVERSAL VISUAL EFFECTS (ALL ELEMENTS) -->
+    <!-- ========================================== -->
+    <div class="border-t border-slate-800 pt-3 space-y-3">
+      <span class="text-[10px] text-slate-500 font-mono uppercase tracking-wider flex items-center gap-1.5">
+        <i class="ri-magic-line text-amber-400 text-sm"></i>
+        Visual Effects
+      </span>
+
+      <!-- Drop Shadow Section -->
+      <div class="p-2.5 bg-slate-900/90 border border-slate-800 rounded-lg space-y-2">
+        <div class="flex items-center justify-between">
+          <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-200">
+            <input
+              type="checkbox"
+              v-model="props.element.hasDropShadow"
+              @change="notifyChange"
+              class="rounded bg-slate-950 border-slate-700 text-amber-400 focus:ring-0"
+            />
+            <span>Drop Shadow</span>
+          </label>
+          <span v-if="props.element.hasDropShadow" class="text-[9px] text-amber-400 font-mono font-bold">ACTIVE</span>
+        </div>
+
+        <div v-if="props.element.hasDropShadow" class="space-y-2 pt-1 border-t border-slate-800/60">
+          <div class="grid grid-cols-2 gap-2 text-[10px] font-mono text-slate-400">
+            <div>
+              <span>X Offset (px)</span>
+              <input
+                type="number"
+                v-model.number="props.element.shadowOffsetX"
+                @input="notifyChange"
+                class="w-full bg-[#0B0F17] border border-slate-700 rounded px-1.5 py-0.5 text-white mt-0.5"
+              />
+            </div>
+            <div>
+              <span>Y Offset (px)</span>
+              <input
+                type="number"
+                v-model.number="props.element.shadowOffsetY"
+                @input="notifyChange"
+                class="w-full bg-[#0B0F17] border border-slate-700 rounded px-1.5 py-0.5 text-white mt-0.5"
+              />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 text-[10px] font-mono text-slate-400">
+            <div>
+              <span>Blur Radius (px)</span>
+              <input
+                type="number"
+                min="0"
+                max="100"
+                v-model.number="props.element.shadowBlur"
+                @input="notifyChange"
+                class="w-full bg-[#0B0F17] border border-slate-700 rounded px-1.5 py-0.5 text-white mt-0.5"
+              />
+            </div>
+            <div>
+              <span>Spread (px)</span>
+              <input
+                type="number"
+                min="-50"
+                max="100"
+                v-model.number="props.element.shadowSpread"
+                @input="notifyChange"
+                class="w-full bg-[#0B0F17] border border-slate-700 rounded px-1.5 py-0.5 text-white mt-0.5"
+              />
+            </div>
+          </div>
 
           <div>
-            <span class="text-[9px] text-slate-400 font-mono">Revealed Color Tint</span>
+            <span class="text-[10px] text-slate-400 font-mono block mb-1">Shadow Color</span>
+            <AdvancedColorPicker
+              v-model="props.element.shadowColor"
+              @change="notifyChange"
+              :showAlpha="true"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Glow Effect Section -->
+      <div class="p-2.5 bg-slate-900/90 border border-slate-800 rounded-lg space-y-2">
+        <div class="flex items-center justify-between">
+          <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-200">
             <input
-              type="color"
-              v-model="props.element.flippedColor"
-              @input="notifyChange"
-              class="w-full h-6 rounded bg-transparent cursor-pointer border border-slate-700 mt-0.5"
+              type="checkbox"
+              v-model="props.element.hasGlow"
+              @change="notifyChange"
+              class="rounded bg-slate-950 border-slate-700 text-amber-400 focus:ring-0"
+            />
+            <span>Glow Effect</span>
+          </label>
+          <span v-if="props.element.hasGlow" class="text-[9px] text-cyan-400 font-mono font-bold">ACTIVE</span>
+        </div>
+
+        <div v-if="props.element.hasGlow" class="space-y-2 pt-1 border-t border-slate-800/60">
+          <div class="grid grid-cols-2 gap-2 text-[10px] font-mono text-slate-400">
+            <div>
+              <span>Blur Radius (px)</span>
+              <input
+                type="number"
+                min="1"
+                max="100"
+                v-model.number="props.element.glowBlur"
+                @input="notifyChange"
+                class="w-full bg-[#0B0F17] border border-slate-700 rounded px-1.5 py-0.5 text-white mt-0.5"
+              />
+            </div>
+            <div>
+              <span>Opacity ({{ Math.round((props.element.glowOpacity ?? 1) * 100) }}%)</span>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                v-model.number="props.element.glowOpacity"
+                @input="notifyChange"
+                class="w-full mt-2 accent-cyan-400 cursor-pointer"
+              />
+            </div>
+          </div>
+
+          <div>
+            <span class="text-[10px] text-slate-400 font-mono block mb-1">Glow Color</span>
+            <AdvancedColorPicker
+              v-model="props.element.glowColor"
+              @change="notifyChange"
+              :showAlpha="true"
             />
           </div>
         </div>

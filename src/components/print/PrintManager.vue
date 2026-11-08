@@ -11,6 +11,7 @@ import {
 } from '../../stores/projectStore.ts';
 
 import jsPDF from 'jspdf';
+import { getRemixIconClass } from '../../utils/iconHelper.ts';
 
 const targetPaper = ref<'A4' | 'LETTER' | 'A3'>('A4');
 const bleedMm = ref<number>(3);
@@ -302,17 +303,19 @@ async function handleExportTts() {
         </button>
         <button
           @click="activeComponentTab = 'standees'"
-          class="w-full text-left px-2.5 py-1.5 text-xs rounded transition-colors"
+          class="w-full text-left px-2.5 py-1.5 text-xs rounded transition-colors flex items-center"
           :class="activeComponentTab === 'standees' ? 'bg-amber-500/15 text-amber-300 font-medium' : 'text-slate-400 hover:text-white'"
         >
-          ♟️ Figures & Standees ({{ standeeSets[0]?.standees.length || 0 }} figures)
+          <i class="ri-user-star-line text-sm mr-1.5 text-amber-400"></i>
+          <span>Figures & Standees ({{ standeeSets[0]?.standees.length || 0 }} figures)</span>
         </button>
         <button
           @click="activeComponentTab = 'boxes'"
-          class="w-full text-left px-2.5 py-1.5 text-xs rounded transition-colors"
+          class="w-full text-left px-2.5 py-1.5 text-xs rounded transition-colors flex items-center"
           :class="activeComponentTab === 'boxes' ? 'bg-amber-500/15 text-amber-300 font-medium' : 'text-slate-400 hover:text-white'"
         >
-          📦 Box Dieline Sheets ({{ boxDielines.length }} boxes)
+          <i class="ri-box-3-line text-sm mr-1.5 text-amber-400"></i>
+          <span>Box Dieline Sheets ({{ boxDielines.length }} boxes)</span>
         </button>
       </div>
 
@@ -423,7 +426,9 @@ async function handleExportTts() {
                   <span class="font-bold truncate">{{ card.name }}</span>
                   <span class="bg-amber-400 text-slate-950 font-bold px-1 rounded-xs">{{ card.cost }}</span>
                 </div>
-                <div class="text-xl text-center">{{ card.artIcon || '⚔️' }}</div>
+                <div class="text-xl text-center flex items-center justify-center">
+                  <i :class="[getRemixIconClass(card.artIcon, 'ri-sword-line'), 'text-amber-400']"></i>
+                </div>
                 <div class="text-[7px] text-slate-400 font-mono truncate">
                   {{ card.type }} · {{ card.stats }}
                 </div>
@@ -443,7 +448,9 @@ async function handleExportTts() {
                   color: 'white'
                 }"
               >
-                <div class="text-base text-amber-400">🛡️</div>
+                <div class="text-base text-amber-400 flex items-center justify-center">
+                  <i class="ri-shield-line"></i>
+                </div>
                 <span class="text-[8px] font-bold tracking-widest uppercase">
                   {{ cardGroups[0]?.cardBack.title || 'TABLESMITH' }}
                 </span>

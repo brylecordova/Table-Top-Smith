@@ -537,7 +537,7 @@ function handleApplyTemplate() {
             : 'hover:bg-slate-800/60 text-slate-300 border border-transparent'"
         >
           <div class="flex items-center gap-2 truncate">
-            <span class="text-base shrink-0">🗺️</span>
+            <i class="ri-map-2-line text-base text-amber-400 shrink-0"></i>
             <div class="truncate">
               <div class="font-medium truncate">{{ b.name }}</div>
               <div class="text-[10px] text-slate-500 font-mono capitalize">{{ b.type }} · {{ b.dimensionsMm.width }}×{{ b.dimensionsMm.height }}mm</div>

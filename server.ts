@@ -457,6 +457,17 @@ app.put('/api/projects/:id', async (req: Request, res: Response) => {
   }
 });
 
+app.delete('/api/projects/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const db = await getDatabase();
+    await db.collection('projects').deleteOne({ _id: id });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: String(err) });
+  }
+});
+
 // Component update endpoints
 app.post('/api/projects/:id/cardGroups', async (req: Request, res: Response) => {
   try {

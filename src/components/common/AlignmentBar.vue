@@ -78,10 +78,10 @@ function selectBoxPreset(preset: typeof boxPresets[0]) {
         <button
           @click="isBoxMenuOpen = !isBoxMenuOpen"
           class="px-2 py-1 rounded bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-200 hover:text-white flex items-center gap-1.5 transition-colors font-medium text-[11px] cursor-pointer"
-          title="Add placeholder box (Header, Footer, Portrait, Effect, HP, Hexagon, etc.)"
+          title="Add layout containers & placeholder boxes (Header, Footer, Portrait, Effect, HP, Hexagon, etc.)"
         >
           <i class="ri-checkbox-blank-line text-amber-400 text-sm leading-none"></i>
-          <span>+ Box</span>
+          <span>Containers</span>
           <i class="ri-arrow-down-s-line text-amber-400 opacity-70 text-xs"></i>
         </button>
 

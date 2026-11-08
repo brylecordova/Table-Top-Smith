@@ -37,8 +37,20 @@ export interface CanvasElement {
   lineHeight?: number;
   letterSpacing?: number;
   color?: string;
+  listStyle?: 'none' | 'disc' | 'decimal' | 'alpha';
   hasShadow?: boolean;
   shadowColor?: string;
+
+  // Visual Effects: Drop Shadow & Glow
+  hasDropShadow?: boolean;
+  shadowOffsetX?: number; // px
+  shadowOffsetY?: number; // px
+  shadowBlur?: number; // px
+  shadowSpread?: number; // px
+  hasGlow?: boolean;
+  glowBlur?: number; // px
+  glowColor?: string;
+  glowOpacity?: number; // 0 - 1
 
   // Image Frame properties (with dual-layer foreground + background support)
   bgImageUrl?: string;
@@ -284,7 +296,8 @@ export interface TabletopIcon {
   id: string;
   name: string;
   glyph: string;
-  category: 'combat' | 'magic' | 'resources' | 'dice' | 'factions' | 'ui' | 'conditions' | 'exploration' | 'equipment' | 'stats' | string;
+  category: 'combat' | 'magic' | 'resources' | 'dice' | 'factions' | 'ui' | 'conditions' | 'exploration' | 'equipment' | 'stats' | 'chat' | string;
   description: string;
   cssClass?: string;
+  set?: 'remix' | 'rpg-awesome' | 'chat' | 'unicode';
 }

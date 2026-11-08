@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { onMounted } from 'vue';
 import {
+  currentView,
   activeTool,
   isLoading,
-  toastMessage,
-  fetchProject
+  toastMessage
 } from './stores/projectStore.ts';
+import MainMenu from './components/menu/MainMenu.vue';
 import HeaderNav from './components/common/HeaderNav.vue';
 import ToolSidebar from './components/common/ToolSidebar.vue';
 import AssetManagerSidebar from './components/common/AssetManagerSidebar.vue';
@@ -16,34 +17,36 @@ import StandeeCreator from './components/standees/StandeeCreator.vue';
 import BoardCreator from './components/boards/BoardCreator.vue';
 import RulebookCreator from './components/rulebook/RulebookCreator.vue';
 import PrintManager from './components/print/PrintManager.vue';
-
-onMounted(() => {
-  fetchProject();
-});
 </script>
 
 <template>
   <div class="h-screen w-screen flex flex-col bg-[#0B0F17] text-slate-100 overflow-hidden font-sans">
-    <!-- Top Navigation Bar -->
-    <HeaderNav />
+    <!-- View 1: Main Menu & Project Management -->
+    <MainMenu v-if="currentView === 'menu'" />
 
-    <!-- Main Studio Body -->
-    <div class="flex-1 flex overflow-hidden">
-      <!-- Tool Dock -->
-      <ToolSidebar />
+    <!-- View 2: Board Game Builder Canvas Studio -->
+    <template v-else-if="currentView === 'builder'">
+      <!-- Top Navigation Bar with Main Menu Return Button -->
+      <HeaderNav />
 
-      <!-- Persistent Sidebar Asset Manager -->
-      <AssetManagerSidebar />
+      <!-- Main Studio Body -->
+      <div class="flex-1 flex overflow-hidden">
+        <!-- Tool Dock -->
+        <ToolSidebar />
 
-      <!-- Active Tool Viewport -->
-      <CardCreator v-if="activeTool === 'cards'" />
-      <BoxCreator v-else-if="activeTool === 'boxes'" />
-      <TokenCreator v-else-if="activeTool === 'tokens'" />
-      <StandeeCreator v-else-if="activeTool === 'standees'" />
-      <BoardCreator v-else-if="activeTool === 'boards'" />
-      <RulebookCreator v-else-if="activeTool === 'rulebook'" />
-      <PrintManager v-else-if="activeTool === 'print'" />
-    </div>
+        <!-- Persistent Sidebar Asset Manager -->
+        <AssetManagerSidebar />
+
+        <!-- Active Tool Viewport -->
+        <CardCreator v-if="activeTool === 'cards'" />
+        <BoxCreator v-else-if="activeTool === 'boxes'" />
+        <TokenCreator v-else-if="activeTool === 'tokens'" />
+        <StandeeCreator v-else-if="activeTool === 'standees'" />
+        <BoardCreator v-else-if="activeTool === 'boards'" />
+        <RulebookCreator v-else-if="activeTool === 'rulebook'" />
+        <PrintManager v-else-if="activeTool === 'print'" />
+      </div>
+    </template>
 
     <!-- Toast Notification Banner -->
     <div
