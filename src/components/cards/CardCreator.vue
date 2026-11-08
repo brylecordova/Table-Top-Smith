@@ -90,6 +90,7 @@ import { useCanvasTransform } from '../../composables/useCanvasTransform.ts';
 const currentFace = ref<'front' | 'back'>('front');
 const showCsvModal = ref(false);
 const showIconModal = ref(false);
+const showBlankConfirmModal = ref(false);
 const selectedElementId = ref<string | null>(null);
 
 const zoomLevel = ref<number>(1);
@@ -508,8 +509,18 @@ function handleAddBox(preset: { shapeType: ShapeType; placeholderType: Placehold
   showToast(`Added ${preset.label} placeholder box`);
 }
 
-// Clear all elements to start with a blank canvas
+// Prompt confirmation before blanking the card
 function handleBlankCanvas() {
+  const count = currentElements.value.length;
+  if (count === 0) {
+    showToast(`Card ${currentFace.value} is already blank.`);
+    return;
+  }
+  // Open stylish in-app confirmation modal
+  showBlankConfirmModal.value = true;
+}
+
+function confirmExecuteBlankCanvas() {
   snapshotState();
   if (currentFace.value === 'front' && activeCard.value) {
     activeCard.value.elements = [];
@@ -518,6 +529,7 @@ function handleBlankCanvas() {
   }
   selectedElementId.value = null;
   persistChanges();
+  showBlankConfirmModal.value = false;
   showToast(`Card ${currentFace.value} cleared to blank canvas!`);
 }
 
@@ -1227,6 +1239,59 @@ watch(activeCard, () => {
             class="px-4 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 disabled:opacity-50 text-slate-950 font-bold transition-colors cursor-pointer"
           >
             Save Name
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Blank Card Confirmation Modal -->
+    <div
+      v-if="showBlankConfirmModal"
+      class="fixed inset-0 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 z-50 select-none animate-in fade-in duration-100"
+    >
+      <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-sm w-full p-5 shadow-2xl space-y-4">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-red-500/20 border border-red-500/40 text-red-400 flex items-center justify-center shrink-0">
+            <i class="ri-error-warning-line text-xl"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-white font-display">Blank Card {{ currentFace === 'front' ? 'Front' : 'Back' }}?</h3>
+            <p class="text-[11px] text-slate-400 mt-0.5">
+              This will remove all {{ currentElements.length }} layer{{ currentElements.length === 1 ? '' : 's' }} from this card face.
+            </p>
+          </div>
+        </div>
+
+        <div class="p-3 rounded-lg bg-[#0B0F17] border border-slate-800 text-[11px] text-slate-300 font-mono">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-slate-500">Target Face:</span>
+            <span class="text-amber-400 font-bold uppercase">{{ currentFace }}</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-slate-500">Elements to delete:</span>
+            <span class="text-red-400 font-bold">{{ currentElements.length }}</span>
+          </div>
+        </div>
+
+        <p class="text-[10px] text-slate-500">
+          Tip: You can use Undo (Ctrl+Z) if you change your mind.
+        </p>
+
+        <div class="pt-2 border-t border-slate-800 flex justify-end gap-2 text-xs">
+          <button
+            type="button"
+            @click="showBlankConfirmModal = false"
+            class="px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            @click="confirmExecuteBlankCanvas"
+            class="px-4 py-1.5 rounded-lg bg-red-500 hover:bg-red-400 text-white font-bold transition-colors cursor-pointer flex items-center gap-1.5 shadow-md shadow-red-500/20"
+          >
+            <i class="ri-delete-bin-line text-xs"></i>
+            <span>Yes, Blank Card</span>
           </button>
         </div>
       </div>

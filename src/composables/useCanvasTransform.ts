@@ -86,25 +86,56 @@ export function useCanvasTransform(options: {
       const canvasDims = options.canvasDimensionsMm ? options.canvasDimensionsMm() : { width: 0, height: 0 };
       const snapThreshold = 1.8; // mm
 
-      // 1. Canvas Center Smart Guides
+      // 1. Canvas Boundary & Center Snapping
       if (canvasDims.width > 0) {
+        const canvasLeft = 0;
+        const canvasRight = canvasDims.width;
         const canvasCenterX = canvasDims.width / 2;
         const elCenterX = newX + el.width / 2;
+        const elRight = newX + el.width;
+
+        // Snap to Canvas Center
         if (Math.abs(elCenterX - canvasCenterX) <= snapThreshold) {
           newX = canvasCenterX - el.width / 2;
           guides.push({ type: 'vertical', pos: canvasCenterX * scale });
         }
+        // Snap to Canvas Left Margin
+        else if (Math.abs(newX - canvasLeft) <= snapThreshold) {
+          newX = canvasLeft;
+          guides.push({ type: 'vertical', pos: canvasLeft * scale });
+        }
+        // Snap to Canvas Right Margin
+        else if (Math.abs(elRight - canvasRight) <= snapThreshold) {
+          newX = canvasRight - el.width;
+          guides.push({ type: 'vertical', pos: canvasRight * scale });
+        }
       }
+
       if (canvasDims.height > 0) {
+        const canvasTop = 0;
+        const canvasBottom = canvasDims.height;
         const canvasCenterY = canvasDims.height / 2;
         const elCenterY = newY + el.height / 2;
+        const elBottom = newY + el.height;
+
+        // Snap to Canvas Vertical Center
         if (Math.abs(elCenterY - canvasCenterY) <= snapThreshold) {
           newY = canvasCenterY - el.height / 2;
           guides.push({ type: 'horizontal', pos: canvasCenterY * scale });
         }
+        // Snap to Canvas Top Margin
+        else if (Math.abs(newY - canvasTop) <= snapThreshold) {
+          newY = canvasTop;
+          guides.push({ type: 'horizontal', pos: canvasTop * scale });
+        }
+        // Snap to Canvas Bottom Margin
+        else if (Math.abs(elBottom - canvasBottom) <= snapThreshold) {
+          newY = canvasBottom - el.height;
+          guides.push({ type: 'horizontal', pos: canvasBottom * scale });
+        }
       }
 
-      // 2. Align to Other Elements
+      // 2. Align to Other Sibling Elements (Object-to-Object Snapping)
       for (const other of otherElements) {
         // Horizontal Alignments (X)
         // Left to Left
@@ -116,6 +147,16 @@ export function useCanvasTransform(options: {
         else if (Math.abs((newX + el.width) - (other.x + other.width)) <= snapThreshold) {
           newX = other.x + other.width - el.width;
           guides.push({ type: 'vertical', pos: (other.x + other.width) * scale });
+        }
+        // Left to Right (Flush edge)
+        else if (Math.abs(newX - (other.x + other.width)) <= snapThreshold) {
+          newX = other.x + other.width;
+          guides.push({ type: 'vertical', pos: (other.x + other.width) * scale });
+        }
+        // Right to Left (Flush edge)
+        else if (Math.abs((newX + el.width) - other.x) <= snapThreshold) {
+          newX = other.x - el.width;
+          guides.push({ type: 'vertical', pos: other.x * scale });
         }
         // Center X to Center X
         else if (Math.abs((newX + el.width / 2) - (other.x + other.width / 2)) <= snapThreshold) {
@@ -133,6 +174,16 @@ export function useCanvasTransform(options: {
         else if (Math.abs((newY + el.height) - (other.y + other.height)) <= snapThreshold) {
           newY = other.y + other.height - el.height;
           guides.push({ type: 'horizontal', pos: (other.y + other.height) * scale });
+        }
+        // Top to Bottom (Flush edge)
+        else if (Math.abs(newY - (other.y + other.height)) <= snapThreshold) {
+          newY = other.y + other.height;
+          guides.push({ type: 'horizontal', pos: (other.y + other.height) * scale });
+        }
+        // Bottom to Top (Flush edge)
+        else if (Math.abs((newY + el.height) - other.y) <= snapThreshold) {
+          newY = other.y - el.height;
+          guides.push({ type: 'horizontal', pos: other.y * scale });
         }
         // Center Y to Center Y
         else if (Math.abs((newY + el.height / 2) - (other.y + other.height / 2)) <= snapThreshold) {

@@ -135,14 +135,14 @@ function handleDragEnd() {
             <i class="ri-arrow-down-s-line text-sm"></i>
           </button>
 
-          <!-- Lock -->
+          <!-- Lock Toggle with explicit tooltip & feedback -->
           <button
             @click="el.locked = !el.locked; emit('change')"
-            class="p-0.5 cursor-pointer"
-            :class="el.locked ? 'text-amber-400' : 'text-slate-500 hover:text-slate-300'"
-            title="Lock Layer"
+            class="p-1 rounded hover:bg-slate-800 transition-colors cursor-pointer"
+            :class="el.locked ? 'text-amber-400 bg-amber-400/10' : 'text-slate-500 hover:text-slate-200'"
+            :title="el.locked ? 'Locked: Cannot be selected or moved on canvas (Click to unlock)' : 'Unlocked: Click to lock on canvas'"
           >
-            <i :class="el.locked ? 'ri-lock-line' : 'ri-lock-unlock-line'" class="text-sm"></i>
+            <i :class="el.locked ? 'ri-lock-fill' : 'ri-lock-unlock-line'" class="text-sm"></i>
           </button>
 
           <!-- Hide -->

@@ -135,22 +135,35 @@ const isPolygonShape = computed(() => {
 });
 
 function handleMouseDown(e: MouseEvent) {
+  if (props.element.locked) {
+    return;
+  }
   emit('select', props.element);
   emit('start-drag', e, props.element);
 }
 
 function handleResize(e: MouseEvent, handle: HandleType) {
+  if (props.element.locked) return;
   emit('start-resize', e, props.element, handle);
 }
 </script>
 
 <template>
   <div
-    class="absolute select-none cursor-move group"
+    class="absolute select-none group"
+    :class="props.element.locked ? 'cursor-not-allowed pointer-events-none' : 'cursor-move'"
     :style="transformStyle"
     @mousedown="handleMouseDown"
-    @dblclick="handleContainerDblClick"
+    @dblclick="props.element.locked ? undefined : handleContainerDblClick($event)"
   >
+    <!-- Visual Indicator for Locked Element -->
+    <div
+      v-if="props.element.locked"
+      class="absolute top-1 right-1 z-50 w-5 h-5 rounded-full bg-slate-900/90 border border-amber-500/60 text-amber-400 flex items-center justify-center text-[10px] shadow-md pointer-events-none"
+      title="Element is locked from selection and editing"
+    >
+      <i class="ri-lock-fill text-xs"></i>
+    </div>
     <!-- Element Content Viewport -->
     <div
       class="w-full h-full relative overflow-hidden transition-all"
